@@ -2,10 +2,10 @@ import { createTheme } from "@mantine/core";
 
 export const pokemuTheme = createTheme({
   primaryColor: "orange",
-  fontFamily: '"Miranda Sans", "Trebuchet MS", Arial, sans-serif',
+  fontFamily: '"Syne Mono", "Trebuchet MS", Arial, sans-serif',
   headings: {
-    fontFamily: '"Bitcount", "Courier New", monospace',
-    fontWeight: "400",
+    fontFamily: '"Handjet", "Courier New", monospace',
+    fontWeight: "700",
   },
   defaultRadius: 0,
   components: {
@@ -16,7 +16,8 @@ export const pokemuTheme = createTheme({
       },
       styles: {
         root: {
-          boxShadow: "inset 0 0 0 2px var(--pokemu-border-light), 0 0 0 4px #000, 8px 8px 0 #000",
+          boxShadow:
+            "inset 0 0 0 2px var(--pokemu-border-light), 0 0 0 4px #000, 8px 8px 0 #000",
         },
       },
     },

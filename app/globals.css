@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Miranda+Sans:wght@400;500;700&family=Bitcount:wght@400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Handjet:wght@400;500;700&family=Syne+Mono&display=swap");
 
 * {
   box-sizing: border-box;
@@ -12,7 +12,7 @@ body {
 }
 
 body {
-  font-family: "Miranda Sans", "Trebuchet MS", Arial, sans-serif;
+  font-family: "Syne Mono", "Trebuchet MS", Arial, sans-serif;
   image-rendering: pixelated;
 }
 

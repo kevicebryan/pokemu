@@ -33,7 +33,7 @@ export default function Home() {
             <Stack gap="sm">
               <Title
                 order={1}
-                ff='"Bitcount", "Courier New", monospace'
+                ff='"Handjet", "Courier New", monospace'
                 tt="uppercase"
                 style={{ letterSpacing: "0.08em" }}
               >

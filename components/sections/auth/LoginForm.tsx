@@ -16,6 +16,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase/client";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -28,8 +29,6 @@ export function LoginForm() {
   const { isAuthenticated, initialized } = useAppSelector((state) => state.auth);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -44,14 +43,15 @@ export function LoginForm() {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
-    setStatus("");
     setLoading(true);
 
     if (!supabase) {
-      setError(
-        "Missing Supabase config. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.",
-      );
+      notifications.show({
+        color: "red",
+        title: "Supabase config missing",
+        message:
+          "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY.",
+      });
       setLoading(false);
       return;
     }
@@ -62,18 +62,37 @@ export function LoginForm() {
     });
 
     if (authError) {
-      setError(authError.message);
+      notifications.show({
+        color: "red",
+        title: "Login failed",
+        message: authError.message,
+      });
       setLoading(false);
       return;
     }
 
     const authUser = data.user;
+    if (authUser && !authUser.email_confirmed_at) {
+      await supabase.auth.signOut();
+      notifications.show({
+        color: "yellow",
+        title: "Email not confirmed",
+        message: "Please confirm your email before logging in.",
+      });
+      setLoading(false);
+      return;
+    }
+
     if (authUser?.id && authUser.email) {
       dispatch(setAuthUser({ id: authUser.id, email: authUser.email }));
       dispatch(fetchProfileByUserId(authUser.id));
     }
 
-    setStatus("Login successful.");
+    notifications.show({
+      color: "teal",
+      title: "Welcome back",
+      message: "Login successful.",
+    });
     router.replace("/dashboard/profile");
     setLoading(false);
   };
@@ -112,8 +131,6 @@ export function LoginForm() {
                   </Button>
                 </Stack>
               </Box>
-
-              <Text c={error ? "red.4" : undefined}>{error || status}</Text>
 
               <Text size="sm">
                 New trainer?{" "}

@@ -11,7 +11,7 @@
 
 .title {
   margin: 0 0 10px;
-  font-family: "Bitcount", "Courier New", monospace;
+  font-family: "Handjet", "Courier New", monospace;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--pokemu-accent-hi);

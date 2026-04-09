@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { AppShell, Box, Button, NavLink, Stack, Text } from "@mantine/core";
-import { IconBookOff, IconGoGame, IconLogout2, IconUser } from "@tabler/icons-react";
+import { AppShell, Box, Button, Image, NavLink, Stack } from "@mantine/core";
+import { IconBook, IconGoGame, IconLogout2, IconUser } from "@tabler/icons-react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { clearAuthUser } from "@/redux/slices/authSlice";
@@ -48,7 +48,17 @@ export function DashboardShell({ children }: DashboardShellProps) {
       <AppShell.Navbar p="sm">
         <Stack justify="space-between" h="100%">
           <Stack gap="xs">
-            <Text fw={700}>Pokemu Menu</Text>
+            <Image
+              src="/pokemu.png"
+              alt="Pokemu Logo"
+              style={{
+                height: "80px",
+                width: "auto",
+                objectFit: "contain",
+                objectPosition: "left",
+              }}
+            />
+
             <NavLink
               component={Link}
               href="/dashboard/profile"
@@ -68,11 +78,15 @@ export function DashboardShell({ children }: DashboardShellProps) {
               href="/dashboard/collection"
               label="Collection"
               active={pathname === "/dashboard/collection"}
-              leftSection={<IconBookOff size={16} />}
+              leftSection={<IconBook size={16} />}
             />
           </Stack>
 
-          <Button color="orange" variant="light" fullWidth onClick={handleLogout} leftSection={<IconLogout2 size={16} />}>
+          <Button
+            variant="transparent"
+            w={"fit-content"}
+            onClick={handleLogout}
+            leftSection={<IconLogout2 size={16} />}>
             Logout
           </Button>
         </Stack>
