@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useAppDispatch } from "@/redux/hooks";
 import { clearAuthUser, setAuthInitialized, setAuthUser } from "@/redux/slices/authSlice";
+import { clearCollection } from "@/redux/slices/collectionSlice";
 import { clearProfile, fetchProfileByUserId } from "@/redux/slices/profileSlice";
 
 export function AuthSync() {
@@ -32,6 +33,7 @@ export function AuthSync() {
       } else {
         dispatch(clearAuthUser());
         dispatch(clearProfile());
+        dispatch(clearCollection());
       }
     };
 
@@ -47,6 +49,7 @@ export function AuthSync() {
       } else {
         dispatch(clearAuthUser());
         dispatch(clearProfile());
+        dispatch(clearCollection());
       }
     });
 
