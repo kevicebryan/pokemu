@@ -4,6 +4,12 @@ export const LOGO_IMAGE_URL = "/pokemu.png";
 /** Max lives / hearts shown in the dashboard header */
 export const MAX_HEARTS = 3;
 
+/**
+ * Milliseconds between heart refills from `last_heart_reset`.
+ * Keep aligned with your Supabase policy / cron that updates `profiles.hearts`.
+ */
+export const HEART_REFILL_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
 /** `localStorage` key: set to `"true"` after the home backstory dialogue is finished (Start). */
 export const POKEMU_BACKSTORY_SHOWN_KEY = "pokemu_backstory_shown";
 
