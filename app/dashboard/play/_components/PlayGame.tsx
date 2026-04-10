@@ -1,6 +1,9 @@
 "use client";
 
 import { supabase } from "@/lib/supabase/client";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { setHearts } from "@/redux/slices/profileSlice";
+import { MAX_HEARTS } from "@/util/constant";
 import { Box, Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import FactBubbles from "./FactBubbles";
@@ -23,7 +26,6 @@ type Artifact = {
 
 type RoundState = "playing" | "correct" | "wrong";
 
-// Show first letter of each word, blank the rest: "Terracotta Army" → "T_________ A___"
 function maskName(name: string): string {
     return name.split("").map((char, i) => {
         if (char === " ") return " ";
@@ -32,7 +34,15 @@ function maskName(name: string): string {
     }).join("");
 }
 
+async function persistHearts(userId: string, hearts: number) {
+    await supabase?.from("profiles").update({ hearts }).eq("id", userId);
+}
+
 export default function PlayGame() {
+    const dispatch = useAppDispatch();
+    const userId = useAppSelector(s => s.auth.user?.id);
+    const hearts = useAppSelector(s => Math.min(MAX_HEARTS, Math.max(0, s.profile.profile?.hearts ?? MAX_HEARTS)));
+
     const [artifact, setArtifact] = useState<Artifact | null>(null);
     const [round, setRound] = useState<RoundState>("playing");
     const [loading, setLoading] = useState(true);
@@ -44,7 +54,13 @@ export default function PlayGame() {
     const [roundStartTime, setRoundStartTime] = useState(Date.now());
     const [secondsLeft, setSecondsLeft] = useState(60);
     const [lastPts, setLastPts] = useState(0);
+    const [countdown, setCountdown] = useState<number | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+
+    function applyHearts(next: number) {
+        dispatch(setHearts(next));
+        if (userId) persistHearts(userId, next);
+    }
 
     async function fetchRound() {
         setLoading(true);
@@ -70,20 +86,52 @@ export default function PlayGame() {
             setScore(s => s + pts);
             setLastPts(pts);
             setCorrect(c => c + 1);
+            applyHearts(MAX_HEARTS);
             setRound("correct");
         } else {
             setLastPts(0);
             setWrong(w => w + 1);
+            applyHearts(hearts - 1);
             setRound("wrong");
         }
     }
 
     function onTimerExpire() {
         setWrong(w => w + 1);
-        fetchRound();
+        applyHearts(hearts - 1);
+        if (hearts > 1) fetchRound();
     }
 
-    useEffect(() => { fetchRound(); }, []);
+    useEffect(() => {
+        if (hearts > 0) fetchRound();
+    }, []);
+
+    useEffect(() => {
+        if (hearts !== 0) return;
+        setCountdown(30);
+        const id = setInterval(() => {
+            setCountdown(prev => {
+                if (prev === null || prev <= 1) {
+                    clearInterval(id);
+                    applyHearts(MAX_HEARTS);
+                    fetchRound();
+                    return null;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(id);
+    }, [hearts === 0]);
+
+    if (hearts === 0) {
+        return (
+            <Box style={{ height: "calc(100dvh - 64px - 32px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+                <Text size="64px" style={{ lineHeight: 1 }}>💀</Text>
+                <Title order={2}>Out of Lives</Title>
+                <Text c="dimmed" ta="center">Restoring in <b style={{ color: "white" }}>{countdown}s</b>…</Text>
+            </Box>
+        );
+    }
 
     const isCorrect = round === "correct";
     const answered = round !== "playing";
@@ -130,7 +178,7 @@ export default function PlayGame() {
                     <Text size="sm"><b>Museum:</b> {artifact?.museum_name ?? "—"}</Text>
                 </Group> : null}
 
-<Text fw={700} size="lg" ff="monospace" ta="center" style={{ letterSpacing: 2 }} c={answered ? (isCorrect ? "green" : "red") : undefined}>
+                <Text fw={700} size="lg" ff="monospace" ta="center" style={{ letterSpacing: 2 }} c={answered ? (isCorrect ? "green" : "red") : undefined}>
                     {artifact ? (answered ? artifact.name : maskName(artifact.name)) : "—"}
                 </Text>
 

@@ -177,6 +177,9 @@ const profileSlice = createSlice({
       state.status = "idle";
       state.error = null;
     },
+    setHearts: (state, action: { payload: number }) => {
+      if (state.profile) state.profile.hearts = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -217,5 +220,5 @@ const profileSlice = createSlice({
   },
 });
 
-export const { clearProfile } = profileSlice.actions;
+export const { clearProfile, setHearts } = profileSlice.actions;
 export const profileReducer = profileSlice.reducer;
