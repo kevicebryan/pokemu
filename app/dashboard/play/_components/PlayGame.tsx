@@ -39,6 +39,13 @@ async function persistHearts(userId: string, hearts: number) {
     await supabase?.from("profiles").update({ hearts }).eq("id", userId);
 }
 
+async function persistHeartsWithResetAt(userId: string, hearts: number) {
+    await supabase
+        ?.from("profiles")
+        .update({ hearts, last_heart_reset: new Date().toISOString() })
+        .eq("id", userId);
+}
+
 async function recordAttempt(userId: string, artifactId: string, isCorrect: boolean, timeSpentSeconds: number) {
     await supabase?.from("question_attempts").insert({
         user_id: userId,
@@ -52,6 +59,7 @@ export default function PlayGame() {
     const dispatch = useAppDispatch();
     const userId = useAppSelector(s => s.auth.user?.id);
     const hearts = useAppSelector(s => Math.min(MAX_HEARTS, Math.max(0, s.profile.profile?.hearts ?? MAX_HEARTS)));
+    const lastHeartReset = useAppSelector((s) => s.profile.profile?.last_heart_reset ?? null);
 
     const [artifact, setArtifact] = useState<Artifact | null>(null);
     const [round, setRound] = useState<RoundState>("playing");
@@ -70,7 +78,15 @@ export default function PlayGame() {
 
     function applyHearts(next: number) {
         dispatch(setHearts(next));
-        if (userId) persistHearts(userId, next);
+        if (!userId) return;
+
+        const spentAHeart = next < hearts;
+        const shouldStartTimer = spentAHeart && next < MAX_HEARTS && !lastHeartReset;
+        if (shouldStartTimer) {
+            persistHeartsWithResetAt(userId, next);
+        } else {
+            persistHearts(userId, next);
+        }
     }
 
     async function fetchRound() {
@@ -95,6 +111,10 @@ export default function PlayGame() {
             .from("artifacts")
             .select("id, name, era, region, country_code, museum_name, image_url, description, fun_facts, art_image_url")
             .limit(50);
+
+        // TODO: Read `countryCode` from `/dashboard/play?countryCode=XX` and
+        // apply `query = query.eq("country_code", countryCode)` so the random
+        // quiz pool is filtered by the selected country.
 
         if (ownedIds.length > 0) {
             query = query.not("id", "in", `(${ownedIds.join(",")})`);

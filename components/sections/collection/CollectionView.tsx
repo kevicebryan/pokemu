@@ -13,20 +13,23 @@ import {
   Loader,
   Modal,
   Paper,
+  Select,
   Stack,
   Text,
+  TextInput,
   Title,
 } from "@mantine/core";
-import { IconPlayerPause, IconPlayerPlay } from "@tabler/icons-react";
+import { IconPlayerPause, IconPlayerPlay, IconSearch } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 import type { CollectionArtifact } from "@/lib/types/collection";
+import { countryCodeToName } from "@/util/country";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { fetchProfileByUserId } from "@/redux/slices/profileSlice";
 import styles from "./CollectionView.module.css";
 
-function normalizeCountryCode(code?: string): string | null {
+function normalizeCountryCode(code?: string | null): string | null {
   if (!code) return null;
   const cc = code.trim().toUpperCase();
   return /^[A-Z]{2}$/.test(cc) ? cc : null;
@@ -36,17 +39,6 @@ function countryCodeToFlagUrl(code?: string): string | null {
   const cc = normalizeCountryCode(code);
   if (!cc) return null;
   return `https://flagcdn.com/w20/${cc.toLowerCase()}.png`;
-}
-
-function countryCodeToName(code?: string): string | null {
-  const cc = normalizeCountryCode(code);
-  if (!cc) return null;
-  try {
-    const dn = new Intl.DisplayNames(["en"], { type: "region" });
-    return dn.of(cc) ?? null;
-  } catch {
-    return null;
-  }
 }
 
 /**
@@ -298,7 +290,11 @@ function LockedPixelImage({ src }: LockedPixelImageProps) {
   );
 }
 
-export function CollectionView() {
+type CollectionViewProps = {
+  initialCountryCode?: string | null;
+};
+
+export function CollectionView({ initialCountryCode = null }: CollectionViewProps) {
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const profile = useAppSelector((s) => s.profile.profile);
@@ -310,8 +306,15 @@ export function CollectionView() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [speechStatus, setSpeechStatus] = useState<SpeechStatus>("idle");
   const [ttsAvailable, setTtsAvailable] = useState(false);
+  const [search, setSearch] = useState("");
+  const normalizedInitialCountryCode = normalizeCountryCode(initialCountryCode);
+  const [countryFilter, setCountryFilter] = useState<string>(normalizedInitialCountryCode ?? "ALL");
   /** Play/pause control only after a successful "Get Ranger intel" for this artifact. */
   const [intelAudioUnlocked, setIntelAudioUnlocked] = useState(false);
+
+  useEffect(() => {
+    setCountryFilter(normalizedInitialCountryCode ?? "ALL");
+  }, [normalizedInitialCountryCode]);
 
   useEffect(() => {
     setTtsAvailable(typeof window !== "undefined" && !!window.speechSynthesis);
@@ -366,6 +369,46 @@ export function CollectionView() {
       return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
     });
   }, [items, unlockedIds]);
+
+  const countryOptions = useMemo(() => {
+    const uniqueCodes = new Set<string>();
+    for (const item of items) {
+      const code = normalizeCountryCode(item.countryCode);
+      if (code) uniqueCodes.add(code);
+    }
+
+    return [
+      { value: "ALL", label: "All countries" },
+      ...Array.from(uniqueCodes)
+        .sort((a, b) => countryCodeToName(a).localeCompare(countryCodeToName(b), undefined, { sensitivity: "base" }))
+        .map((code) => ({
+          value: code,
+          label: `${countryCodeToName(code)} (${code})`,
+          code,
+        })),
+    ];
+  }, [items]);
+
+  const filteredItems = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return orderedItems.filter((artifact) => {
+      const code = normalizeCountryCode(artifact.countryCode);
+      if (countryFilter !== "ALL" && code !== countryFilter) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      const countryName = code ? countryCodeToName(code).toLowerCase() : "";
+      const title = artifact.title.toLowerCase();
+      const codeText = (code ?? "").toLowerCase();
+      return (
+        title.includes(query) ||
+        countryName.includes(query) ||
+        codeText.includes(query)
+      );
+    });
+  }, [countryFilter, orderedItems, search]);
 
   const openArtifact = (artifact: CollectionArtifact) => {
     setSelected(artifact);
@@ -494,8 +537,56 @@ export function CollectionView() {
         </Text>
       ) : null}
 
+      <Stack gap="xs">
+        <TextInput
+          label="Search"
+          placeholder="Search artifact, country name, or code..."
+          leftSection={<IconSearch size={16} />}
+          value={search}
+          onChange={(event) => setSearch(event.currentTarget.value)}
+        />
+        <Select
+          label="Country"
+          data={countryOptions}
+          value={countryFilter}
+          onChange={(value) => setCountryFilter(value ?? "ALL")}
+          allowDeselect={false}
+          searchable
+          renderOption={({ option }) => {
+            const code = (option as unknown as { code?: string }).code;
+            const flagUrl = code ? countryCodeToFlagUrl(code) : null;
+            return (
+              <Group gap="xs" wrap="nowrap">
+                {flagUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={flagUrl}
+                    alt=""
+                    width={16}
+                    height={12}
+                    style={{ borderRadius: 3, border: "1px solid var(--mantine-color-gray-4)" }}
+                    loading="lazy"
+                  />
+                ) : null}
+                <Text size="sm">{option.label}</Text>
+              </Group>
+            );
+          }}
+        />
+      </Stack>
+
+      {status !== "loading" && !error ? (
+        <Text size="sm" c="dimmed">
+          Showing {filteredItems.length} of {orderedItems.length} artifacts
+        </Text>
+      ) : null}
+
+      {status !== "loading" && !error && orderedItems.length > 0 && filteredItems.length === 0 ? (
+        <Text c="dimmed">No artifacts match your current filters.</Text>
+      ) : null}
+
       <Grid gap={{ base: "sm", md: "md" }} align="stretch" justify="flex-start">
-        {orderedItems.map((artifact) => {
+        {filteredItems.map((artifact) => {
           const isUnlocked = unlockedSet.has(artifact.id);
           const tileImageUrl = artifact.pixelImageUrl || artifact.realImageUrl;
           return (
@@ -547,7 +638,7 @@ export function CollectionView() {
                   const flagUrl = countryCodeToFlagUrl(selected.countryCode);
                   const label =
                     selected.countryName?.trim() ||
-                    countryCodeToName(selected.countryCode) ||
+                    (selected.countryCode ? countryCodeToName(selected.countryCode) : null) ||
                     selected.countryCode;
                   if (!flagUrl && !label) return null;
                   return (
