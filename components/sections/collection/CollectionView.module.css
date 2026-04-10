@@ -166,6 +166,15 @@
   stroke-linejoin: round;
 }
 
+.countryFlag {
+  width: 16px;
+  height: 12px;
+  object-fit: cover;
+  border: 1px solid color-mix(in srgb, var(--mantine-color-dark-5) 55%, transparent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
 .counterBadge {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;

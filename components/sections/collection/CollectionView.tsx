@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ActionIcon,
   Alert,
@@ -25,6 +25,29 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { fetchProfileByUserId } from "@/redux/slices/profileSlice";
 import styles from "./CollectionView.module.css";
+
+function normalizeCountryCode(code?: string): string | null {
+  if (!code) return null;
+  const cc = code.trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(cc) ? cc : null;
+}
+
+function countryCodeToFlagUrl(code?: string): string | null {
+  const cc = normalizeCountryCode(code);
+  if (!cc) return null;
+  return `https://flagcdn.com/w20/${cc.toLowerCase()}.png`;
+}
+
+function countryCodeToName(code?: string): string | null {
+  const cc = normalizeCountryCode(code);
+  if (!cc) return null;
+  try {
+    const dn = new Intl.DisplayNames(["en"], { type: "region" });
+    return dn.of(cc) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Speaking-head mark (paths from speaking-head-svgrepo-com.svg, Twemoji-style).
@@ -334,6 +357,15 @@ export function CollectionView() {
 
   const unlockedSet = new Set(unlockedIds);
   const collected = unlockedSet.size;
+  const orderedItems = useMemo(() => {
+    const unlocked = new Set(unlockedIds);
+    return [...items].sort((a, b) => {
+      const au = unlocked.has(a.id);
+      const bu = unlocked.has(b.id);
+      if (au !== bu) return au ? -1 : 1; // unlocked first
+      return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+    });
+  }, [items, unlockedIds]);
 
   const openArtifact = (artifact: CollectionArtifact) => {
     setSelected(artifact);
@@ -463,7 +495,7 @@ export function CollectionView() {
       ) : null}
 
       <Grid gap={{ base: "sm", md: "md" }} align="stretch" justify="flex-start">
-        {items.map((artifact) => {
+        {orderedItems.map((artifact) => {
           const isUnlocked = unlockedSet.has(artifact.id);
           const tileImageUrl = artifact.pixelImageUrl || artifact.realImageUrl;
           return (
@@ -503,6 +535,39 @@ export function CollectionView() {
       >
         {selected ? (
           <Stack gap="md">
+            {selected.year || selected.countryCode || selected.countryName ? (
+              <Group gap="xs" c="dimmed" fz="sm" wrap="wrap">
+                {selected.year ? <Text span>{selected.year}</Text> : null}
+                {selected.year && (selected.countryCode || selected.countryName) ? (
+                  <Text span c="dimmed">
+                    ·
+                  </Text>
+                ) : null}
+                {(() => {
+                  const flagUrl = countryCodeToFlagUrl(selected.countryCode);
+                  const label =
+                    selected.countryName?.trim() ||
+                    countryCodeToName(selected.countryCode) ||
+                    selected.countryCode;
+                  if (!flagUrl && !label) return null;
+                  return (
+                    <Group gap={6} wrap="nowrap">
+                      {flagUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={flagUrl}
+                          alt={label ? `${label} flag` : "Country flag"}
+                          title={label ?? undefined}
+                          className={styles.countryFlag}
+                          loading="lazy"
+                        />
+                      ) : null}
+                      {label ? <Text span>{label}</Text> : null}
+                    </Group>
+                  );
+                })()}
+              </Group>
+            ) : null}
             {!unlockedSet.has(selected.id) ? (
               <Text c="dimmed" size="sm">
                 This artifact is still locked. Win scavenger rounds to unlock the full photo.

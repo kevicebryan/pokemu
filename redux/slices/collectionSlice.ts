@@ -18,9 +18,21 @@ function pickStr(row: ArtifactRow, keys: string[], fallback = ""): string {
   return fallback;
 }
 
+function pickYear(row: ArtifactRow, keys: string[]): string | undefined {
+  for (const k of keys) {
+    const v = row[k];
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+    if (typeof v === "string" && v.trim().length > 0) return v.trim();
+  }
+  return undefined;
+}
+
 export function mapArtifactRow(row: ArtifactRow): CollectionArtifact | null {
   const id = row.id;
   if (typeof id !== "string" && typeof id !== "number") return null;
+
+  const countryCodeRaw = pickStr(row, ["country_code", "countryCode", "origin_country_code", "iso2"], "").trim();
+  const countryCode = countryCodeRaw ? countryCodeRaw.toUpperCase() : undefined;
 
   return {
     id: String(id),
@@ -46,6 +58,9 @@ export function mapArtifactRow(row: ArtifactRow): CollectionArtifact | null {
       "photo_url",
     ]),
     facts: pickStr(row, ["facts", "fun_fact", "description", "story", "caption"]),
+    year: pickYear(row, ["year", "artifact_year", "era", "date", "origin_year"]),
+    countryCode,
+    countryName: pickStr(row, ["country_name", "country", "origin_country", "origin"], "") || undefined,
   };
 }
 
