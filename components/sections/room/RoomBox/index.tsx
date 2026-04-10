@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Box,
   Button,
+  Center,
   Flex,
   Group,
   Image,
@@ -21,6 +22,7 @@ import {
   addRoomDecoration,
   clampDecorationCenterPct,
   fetchRoomDecorations,
+  fetchRoomOwnerUsername,
   ROOM_DECORATION_TILE_HALF_PCT,
   ROOM_DECORATION_TILE_PCT,
   type RoomDecoration,
@@ -105,6 +107,7 @@ export default function RoomBox({
   const [layoutDirty, setLayoutDirty] = useState(false);
   const [savingLayout, setSavingLayout] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [roomOwnerName, setRoomOwnerName] = useState<string | null>(null);
   const [roomSurfaceBg, setRoomSurfaceBg] = useState(() => {
     if (typeof window === "undefined") {
       return { url: ROOM_BG_IMAGE_URL, slug: null as string | null };
@@ -132,7 +135,10 @@ export default function RoomBox({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const { data, error } = await fetchRoomDecorations(roomOwnerUserId);
+      const [{ data, error }, { data: ownerName }] = await Promise.all([
+        fetchRoomDecorations(roomOwnerUserId),
+        fetchRoomOwnerUsername(roomOwnerUserId),
+      ]);
       if (cancelled) return;
       if (error) {
         setLoadError(error);
@@ -141,6 +147,7 @@ export default function RoomBox({
         setLoadError(null);
         setDecorations(data);
       }
+      setRoomOwnerName(ownerName);
       setLayoutDirty(false);
       setLoading(false);
     })();
@@ -294,6 +301,9 @@ export default function RoomBox({
   };
 
   const hideViewOnlyHint = fullWidth && !canEdit;
+  const ownerLabel = roomOwnerName?.trim()
+    ? `${roomOwnerName.trim()}'s Room`
+    : `${roomOwnerUserId.slice(0, 8)}…'s Room`;
 
   return (
     <Stack gap="sm">
@@ -351,6 +361,24 @@ export default function RoomBox({
             overflow: "hidden",
           }}
         >
+
+          <Box className="room-owner-footer"
+            w={"100%"}
+            h={"8%"}
+            pos="absolute"
+            bottom={0}
+            left={0}
+            style={{
+              backgroundColor: "var(--mantine-color-mistral-6)",
+            }}
+          >
+            <Center w={"100%"} h={"100%"}>
+              <Text tt="uppercase" fw={600} c={"mistral.1"}>
+                {ownerLabel}
+              </Text>
+            </Center>
+          </Box>
+
           {loading ? (
             <Loader color="mistral" pos="absolute" left="50%" top="50%" style={{ transform: "translate(-50%, -50%)" }} />
           ) : null}
@@ -512,7 +540,6 @@ export default function RoomBox({
                         <Box
                           style={{
                             aspectRatio: 1,
-                            borderRadius: 8,
                             overflow: "hidden",
                             border: active
                               ? "3px solid var(--mantine-color-mistral-6)"

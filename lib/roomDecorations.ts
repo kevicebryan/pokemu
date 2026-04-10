@@ -142,6 +142,31 @@ export type OtherRoomOwner = {
   previewImageUrl: string | null;
 };
 
+export async function fetchRoomOwnerUsername(
+  userId: string,
+): Promise<{ data: string | null; error: string | null }> {
+  if (!supabase) {
+    return { data: null, error: "Supabase client is not configured." };
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("username")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    return { data: null, error: error.message };
+  }
+
+  const username =
+    typeof (data as { username?: string | null } | null)?.username === "string"
+      ? (data as { username: string }).username.trim()
+      : "";
+
+  return { data: username || null, error: null };
+}
+
 /**
  * Users who have at least one room decoration. Optionally excludes one id (e.g. current user).
  */
