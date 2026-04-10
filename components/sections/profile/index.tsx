@@ -51,6 +51,9 @@ const ProfileSection = () => {
   const availableCountryCodes = useAppSelector(
     (state) => state.profile.availableCountryCodes,
   );
+  const artifactsByCountryCode = useAppSelector(
+    (state) => state.profile.artifactsByCountryCode,
+  );
   const profileStatus = useAppSelector((state) => state.profile.status);
   const collectedArtifactCount = useAppSelector(
     (state) => state.profile.collectedArtifactCount,
@@ -157,6 +160,7 @@ const ProfileSection = () => {
           <AsciiAtlas
             filledCountryCodes={unlockedCountryCodes}
             availableCountryCodes={availableCountryCodes}
+            artifactsByCountryCode={artifactsByCountryCode}
           />
         </Stack>
       ) : null}

@@ -16,6 +16,7 @@ type ProfileState = {
   collectedArtifactCount: number;
   unlockedCountryCodes: string[];
   availableCountryCodes: string[];
+  artifactsByCountryCode: Record<string, string[]>;
   unlockedRegions: string[];
   availableRegions: string[];
   status: "idle" | "loading" | "succeeded" | "failed";
@@ -27,6 +28,7 @@ const initialState: ProfileState = {
   collectedArtifactCount: 0,
   unlockedCountryCodes: [],
   availableCountryCodes: [],
+  artifactsByCountryCode: {},
   unlockedRegions: [],
   availableRegions: [],
   status: "idle",
@@ -36,7 +38,7 @@ const initialState: ProfileState = {
 type ArtifactGeoRow = {
   country_code: string | null;
   region: string | null;
-};
+} & Record<string, unknown>;
 
 type UserCollectionArtifactRow = {
   artifacts: ArtifactGeoRow | ArtifactGeoRow[] | null;
@@ -47,6 +49,7 @@ type ProfileFetchResult = {
   collectedArtifactCount: number;
   unlockedCountryCodes: string[];
   availableCountryCodes: string[];
+  artifactsByCountryCode: Record<string, string[]>;
   unlockedRegions: string[];
   availableRegions: string[];
 };
@@ -68,6 +71,16 @@ function asSortedStringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string").sort();
 }
 
+function pickArtifactName(row: Record<string, unknown>): string | null {
+  for (const key of ["title", "name", "label"]) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return null;
+}
+
 export const fetchProfileByUserId = createAsyncThunk(
   "profile/fetchByUserId",
   async (userId: string, { rejectWithValue }) => {
@@ -84,7 +97,7 @@ export const fetchProfileByUserId = createAsyncThunk(
           )
           .eq("id", userId)
           .maybeSingle(),
-        supabase.from("artifacts").select("country_code, region"),
+        supabase.from("artifacts").select("*"),
         supabase
           .from("user_collections")
           .select(
@@ -105,6 +118,7 @@ export const fetchProfileByUserId = createAsyncThunk(
 
     const availableCountries = new Set<string>();
     const availableRegions = new Set<string>();
+    const artifactsByCountryCode = new Map<string, Set<string>>();
     const unlockedCountries = new Set<string>();
     const unlockedRegions = new Set<string>();
 
@@ -117,6 +131,15 @@ export const fetchProfileByUserId = createAsyncThunk(
       const region = normalizeRegion(artifact.region);
       if (countryCode) availableCountries.add(countryCode);
       if (region) availableRegions.add(region);
+      if (countryCode) {
+        const artifactName = pickArtifactName(artifact);
+        if (artifactName) {
+          if (!artifactsByCountryCode.has(countryCode)) {
+            artifactsByCountryCode.set(countryCode, new Set<string>());
+          }
+          artifactsByCountryCode.get(countryCode)?.add(artifactName);
+        }
+      }
     }
 
     for (const collection of collectionRows) {
@@ -134,6 +157,12 @@ export const fetchProfileByUserId = createAsyncThunk(
       collectedArtifactCount: collectionRows.length,
       unlockedCountryCodes: Array.from(unlockedCountries).sort(),
       availableCountryCodes: Array.from(availableCountries).sort(),
+      artifactsByCountryCode: Object.fromEntries(
+        Array.from(artifactsByCountryCode.entries()).map(([countryCode, names]) => [
+          countryCode,
+          Array.from(names).sort(),
+        ]),
+      ),
       unlockedRegions: Array.from(unlockedRegions).sort(),
       availableRegions: Array.from(availableRegions).sort(),
     };
@@ -180,6 +209,7 @@ const profileSlice = createSlice({
       state.collectedArtifactCount = 0;
       state.unlockedCountryCodes = [];
       state.availableCountryCodes = [];
+      state.artifactsByCountryCode = {};
       state.unlockedRegions = [];
       state.availableRegions = [];
       state.status = "idle";
@@ -205,6 +235,7 @@ const profileSlice = createSlice({
         state.availableCountryCodes = asSortedStringArray(
           action.payload.availableCountryCodes,
         );
+        state.artifactsByCountryCode = action.payload.artifactsByCountryCode ?? {};
         state.unlockedRegions = asSortedStringArray(action.payload.unlockedRegions);
         state.availableRegions = asSortedStringArray(
           action.payload.availableRegions,
