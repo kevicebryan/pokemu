@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { AppShell, Button, NavLink, Stack } from "@mantine/core";
 import type { IconProps } from "@tabler/icons-react";
-import { IconBook, IconDeviceGamepad, IconLogout2, IconUser } from "@tabler/icons-react";
+import { IconBook, IconDeviceGamepad, IconDoor, IconLogout2, IconUser } from "@tabler/icons-react";
 type NavItem = {
   href: string;
   label: string;
@@ -14,6 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/play", label: "Play", Icon: IconDeviceGamepad },
   { href: "/dashboard/profile", label: "Profile", Icon: IconUser },
   { href: "/dashboard/collection", label: "Collection", Icon: IconBook },
+  { href: "/dashboard/room", label: "Room", Icon: IconDoor },
 ];
 
 type DashboardNavbarProps = {

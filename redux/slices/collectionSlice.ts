@@ -115,6 +115,11 @@ const collectionSlice = createSlice({
       state.status = "idle";
       state.error = null;
     },
+    unlockArtifact: (state, action: { payload: string }) => {
+      if (!state.unlockedIds.includes(action.payload)) {
+        state.unlockedIds.push(action.payload);
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -135,5 +140,5 @@ const collectionSlice = createSlice({
   },
 });
 
-export const { clearCollection } = collectionSlice.actions;
+export const { clearCollection, unlockArtifact } = collectionSlice.actions;
 export const collectionReducer = collectionSlice.reducer;
