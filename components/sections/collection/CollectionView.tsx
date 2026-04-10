@@ -165,7 +165,7 @@ export function CollectionView() {
       <Modal
         opened={detailOpen}
         onClose={closeArtifactModal}
-        title={<Title order={3}>{selected?.title ?? "Artifact"}</Title>}
+        title={selected?.title ?? "Artifact"}
         size="lg"
         radius={0}
         centered
