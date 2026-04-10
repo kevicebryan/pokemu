@@ -98,6 +98,74 @@
   white-space: pre-wrap;
 }
 
+.intelPanel {
+  border: 2px solid var(--mantine-color-mistral-filled);
+  border-radius: 0;
+  background: light-dark(
+    color-mix(in srgb, var(--mantine-color-mistral-0) 55%, var(--mantine-color-body)),
+    color-mix(in srgb, var(--mantine-color-dark-6) 92%, var(--mantine-color-mistral-9))
+  );
+}
+
+.intelPanelTitle {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  font-size: var(--mantine-font-size-sm);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--mantine-color-mistral-filled);
+  padding-bottom: var(--mantine-spacing-xs);
+  margin-bottom: var(--mantine-spacing-sm);
+  border-bottom: 2px solid var(--mantine-color-mistral-filled);
+}
+
+.intelLeadIn {
+  line-height: 1.5;
+}
+
+.bulletSquare {
+  width: 8px;
+  height: 8px;
+  margin-top: 0.35em;
+  flex-shrink: 0;
+  background: var(--mantine-color-mistral-filled);
+  border-radius: 0;
+  box-shadow: 1px 1px 0 var(--mantine-color-mistral-4);
+}
+
+@keyframes speakingPulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(1.12);
+  }
+}
+
+.speakingIcon {
+  animation: speakingPulse 0.85s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.speakingHeadWaves {
+  fill: none;
+  stroke: var(--mantine-color-mistral-4);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.speakingHeadFace {
+  fill: none;
+  stroke: var(--mantine-color-mistral-filled);
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .counterBadge {
   font-family: var(--mantine-font-family-headings);
   font-weight: 800;
