@@ -12,6 +12,8 @@ type ProfileRecord = {
 
 type ProfileState = {
   profile: ProfileRecord | null;
+  /** Row count in `user_collections` for this user (source of truth for “artifacts restored”). */
+  collectedArtifactCount: number;
   unlockedCountryCodes: string[];
   availableCountryCodes: string[];
   unlockedRegions: string[];
@@ -22,6 +24,7 @@ type ProfileState = {
 
 const initialState: ProfileState = {
   profile: null,
+  collectedArtifactCount: 0,
   unlockedCountryCodes: [],
   availableCountryCodes: [],
   unlockedRegions: [],
@@ -41,6 +44,7 @@ type UserCollectionArtifactRow = {
 
 type ProfileFetchResult = {
   profile: ProfileRecord | null;
+  collectedArtifactCount: number;
   unlockedCountryCodes: string[];
   availableCountryCodes: string[];
   unlockedRegions: string[];
@@ -104,6 +108,9 @@ export const fetchProfileByUserId = createAsyncThunk(
     const unlockedCountries = new Set<string>();
     const unlockedRegions = new Set<string>();
 
+    const collectionRows = (collectionGeoResult.data ??
+      []) as UserCollectionArtifactRow[];
+
     for (const artifact of (availableGeoResult.data ??
       []) as ArtifactGeoRow[]) {
       const countryCode = normalizeCode(artifact.country_code);
@@ -112,8 +119,7 @@ export const fetchProfileByUserId = createAsyncThunk(
       if (region) availableRegions.add(region);
     }
 
-    for (const collection of (collectionGeoResult.data ??
-      []) as UserCollectionArtifactRow[]) {
+    for (const collection of collectionRows) {
       const artifact = Array.isArray(collection.artifacts)
         ? (collection.artifacts[0] ?? null)
         : collection.artifacts;
@@ -125,6 +131,7 @@ export const fetchProfileByUserId = createAsyncThunk(
 
     const result: ProfileFetchResult = {
       profile: profileResult.data as ProfileRecord | null,
+      collectedArtifactCount: collectionRows.length,
       unlockedCountryCodes: Array.from(unlockedCountries).sort(),
       availableCountryCodes: Array.from(availableCountries).sort(),
       unlockedRegions: Array.from(unlockedRegions).sort(),
@@ -170,6 +177,7 @@ const profileSlice = createSlice({
   reducers: {
     clearProfile: (state) => {
       state.profile = null;
+      state.collectedArtifactCount = 0;
       state.unlockedCountryCodes = [];
       state.availableCountryCodes = [];
       state.unlockedRegions = [];
@@ -187,6 +195,7 @@ const profileSlice = createSlice({
       .addCase(fetchProfileByUserId.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.profile = action.payload.profile;
+        state.collectedArtifactCount = action.payload.collectedArtifactCount;
         state.unlockedCountryCodes = asSortedStringArray(
           action.payload.unlockedCountryCodes,
         );

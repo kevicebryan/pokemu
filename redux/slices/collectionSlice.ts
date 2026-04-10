@@ -26,6 +26,7 @@ export function mapArtifactRow(row: ArtifactRow): CollectionArtifact | null {
     id: String(id),
     title: pickStr(row, ["title", "name", "label"], "Artifact"),
     pixelImageUrl: pickStr(row, [
+      "art_image_url",
       "pixel_image_url",
       "pixel_art_url",
       "image_8bit",
