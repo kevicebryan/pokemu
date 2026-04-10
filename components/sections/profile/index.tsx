@@ -114,49 +114,50 @@ const ProfileSection = () => {
 
       {showRangerStats ? (
         <Stack gap="sm" mt="xs">
-          <Stack gap={4}>
-            <Title order={4}>
-              Hearts
-            </Title>
-            <Group gap="xs" align="center" wrap="wrap">
-              <Text size="sm" c="dimmed">
-                {heartsLeft}/{MAX_HEARTS}
-              </Text>
-              <Group gap={4} wrap="nowrap">
-                {Array.from({ length: MAX_HEARTS }, (_, index) => {
-                  const filled = index < heartsLeft;
-                  return filled ? (
-                    <IconHeartFilled
-                      key={index}
-                      size={22}
-                      color="var(--mantine-color-mistral-6)"
-                      stroke={1.5}
-                    />
-                  ) : (
-                    <IconHeart
-                      key={index}
-                      size={22}
-                      color="var(--mantine-color-dimmed)"
-                      stroke={1.5}
-                    />
-                  );
-                })}
+          <Group align="flex-start">
+            <Stack gap={4}>
+              <Title order={4}>
+                Hearts
+              </Title>
+              <Group gap="xs" align="center" wrap="wrap">
+                <Text size="sm" c="dimmed">
+                  {heartsLeft}/{MAX_HEARTS}
+                </Text>
+                <Group gap={4} wrap="nowrap">
+                  {Array.from({ length: MAX_HEARTS }, (_, index) => {
+                    const filled = index < heartsLeft;
+                    return filled ? (
+                      <IconHeartFilled
+                        key={index}
+                        size={22}
+                        color="var(--mantine-color-mistral-6)"
+                        stroke={1.5}
+                      />
+                    ) : (
+                      <IconHeart
+                        key={index}
+                        size={22}
+                        color="var(--mantine-color-dimmed)"
+                        stroke={1.5}
+                      />
+                    );
+                  })}
+                </Group>
               </Group>
-            </Group>
-            <Text size="xs" c="dimmed">
-              {heartRefillCaption(heartsLeft, profile?.last_heart_reset ?? null)}
-            </Text>
-          </Stack>
-
-          <Stack gap={4}>
-            <Title order={4}>
-              Artifacts restored
-            </Title>
-            <Text size="sm" c="dimmed">
-              {collectedArtifactCount} item
-              {collectedArtifactCount === 1 ? "" : "s"} scavanged
-            </Text>
-          </Stack>
+              <Text size="xs" c="dimmed">
+                {heartRefillCaption(heartsLeft, profile?.last_heart_reset ?? null)}
+              </Text>
+            </Stack>
+            <Stack gap={4}>
+              <Title order={4}>
+                Artifacts restored
+              </Title>
+              <Text size="sm" c="dimmed">
+                {collectedArtifactCount} item
+                {collectedArtifactCount === 1 ? "" : "s"} scavanged
+              </Text>
+            </Stack>
+          </Group>
           <AsciiAtlas
             filledCountryCodes={unlockedCountryCodes}
             availableCountryCodes={availableCountryCodes}

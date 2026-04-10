@@ -1,5 +1,5 @@
-import PlayGame from "./_components/PlayGame";
+import PlaySection from "@/components/sections/play";
 
 export default function DashboardPlayPage() {
-    return <PlayGame />;
+    return <PlaySection />;
 }
