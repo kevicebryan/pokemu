@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Box, Button, Stack, Text, TextInput } from "@mantine/core";
+import { useState } from "react";
+import { Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { fetchProfileByUserId, upsertProfile } from "@/redux/slices/profileSlice";
-import styles from "./ProfileSection.module.css";
+import { upsertProfile } from "@/redux/slices/profileSlice";
 
 export function ProfileForm() {
   const dispatch = useAppDispatch();
@@ -15,13 +14,6 @@ export function ProfileForm() {
   const [usernameDraft, setUsernameDraft] = useState<string | null>(null);
   const [status, setStatus] = useState("");
 
-  useEffect(() => {
-    if (!authUser?.id) {
-      return;
-    }
-    dispatch(fetchProfileByUserId(authUser.id));
-  }, [dispatch, authUser?.id]);
-
   const usernameValue = usernameDraft ?? profile?.username ?? "";
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -30,42 +22,40 @@ export function ProfileForm() {
       return;
     }
     setStatus("");
-    await dispatch(
+    const result = await dispatch(
       upsertProfile({
         id: authUser.id,
         username: usernameValue.trim(),
       }),
     );
     setUsernameDraft(null);
-    setStatus("Profile saved.");
+    if (upsertProfile.fulfilled.match(result)) {
+      setStatus("Profile saved.");
+    }
   };
 
   if (!authUser) {
-    return (
-      <Text className={styles.copy}>Login first to create or edit your profile.</Text>
-    );
+    return null;
   }
 
   return (
     <Stack gap="sm">
-      <Box component="form" className={styles.form} onSubmit={onSubmit}>
-        <TextInput
-          required
-          label="Username"
-          value={usernameValue}
-          onChange={(event) => setUsernameDraft(event.currentTarget.value)}
-          maxLength={32}
-        />
-        <Button type="submit" color="orange" loading={profileStatus === "loading"}>
-          Save Profile
-        </Button>
+      <Box component="form" onSubmit={onSubmit}>
+        <Group justify="space-between" align="flex-end">
+          <TextInput
+            required
+            label="Username"
+            value={usernameValue}
+            onChange={(event) => setUsernameDraft(event.currentTarget.value)}
+            flex={1}
+          />
+          <Button type="submit" loading={profileStatus === "loading"}>
+            Save Profile
+          </Button>
+        </Group>
       </Box>
-
-      <Text className={styles.stats}>
-        Hearts: {profile?.hearts ?? 0} | Items Restored: {profile?.total_items_restored ?? 0}
-      </Text>
-      {profileError && <Text className={styles.error}>{profileError}</Text>}
-      {status && <Text className={styles.status}>{status}</Text>}
+      {profileError && <Text c="red">{profileError}</Text>}
+      {status && <Text c="dimmed">{status}</Text>}
     </Stack>
   );
 }

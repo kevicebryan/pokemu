@@ -9,9 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.5",
     "@mantine/core": "^9.0.1",
     "@mantine/hooks": "^9.0.1",
     "@mantine/notifications": "^9.0.1",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.5.0",
     "@reduxjs/toolkit": "^2.11.2",
     "@supabase/supabase-js": "^2.103.0",
     "@tabler/icons-react": "^3.41.1",
@@ -19,7 +22,9 @@
     "next": "16.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-redux": "^9.2.0"
+    "react-redux": "^9.2.0",
+    "three": "^0.183.2",
+    "world-countries": "^5.1.0"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -27,6 +32,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "pngjs": "^7.0.0",
     "typescript": "^5"
   }
 }
