@@ -1,0 +1,44 @@
+.gridCard {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  border: 3px solid var(--mantine-color-mistral-filled);
+  border-radius: 0;
+  background: var(--mantine-color-body);
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.gridCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 var(--mantine-color-mistral-4);
+}
+
+.gridCard:focus-visible {
+  outline: 2px solid var(--mantine-color-mistral-filled);
+  outline-offset: 2px;
+}
+
+.thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+}
+
+.cardMeta {
+  padding: 6px 8px 8px;
+  border-top: 2px solid var(--mantine-color-mistral-filled);
+}
+
+.realPhoto {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  max-height: min(52vh, 420px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
