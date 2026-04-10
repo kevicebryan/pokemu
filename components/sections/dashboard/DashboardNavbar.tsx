@@ -33,7 +33,11 @@ export function DashboardNavbar({ pathname, onLogout }: DashboardNavbarProps) {
               component={Link}
               href={href}
               label={label}
-              active={pathname === href}
+              active={
+                href === "/dashboard/room"
+                  ? pathname === href || pathname.startsWith(`${href}/`)
+                  : pathname === href
+              }
               leftSection={<Icon size={20} />}
               py={"sm"}
             />
