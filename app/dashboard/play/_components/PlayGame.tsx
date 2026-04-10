@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setHearts } from "@/redux/slices/profileSlice";
+import { unlockArtifact, fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { MAX_HEARTS } from "@/util/constant";
 import { Box, Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
@@ -38,6 +39,15 @@ async function persistHearts(userId: string, hearts: number) {
     await supabase?.from("profiles").update({ hearts }).eq("id", userId);
 }
 
+async function recordAttempt(userId: string, artifactId: string, isCorrect: boolean, timeSpentSeconds: number) {
+    await supabase?.from("question_attempts").insert({
+        user_id: userId,
+        artifact_id: artifactId,
+        is_correct: isCorrect,
+        time_spent_seconds: Math.round(timeSpentSeconds * 100) / 100,
+    });
+}
+
 export default function PlayGame() {
     const dispatch = useAppDispatch();
     const userId = useAppSelector(s => s.auth.user?.id);
@@ -52,6 +62,7 @@ export default function PlayGame() {
     const [score, setScore] = useState(0);
     const [timerKey, setTimerKey] = useState(0);
     const [roundStartTime, setRoundStartTime] = useState(Date.now());
+    const [roundAttempts, setRoundAttempts] = useState(0);
     const [secondsLeft, setSecondsLeft] = useState(60);
     const [lastPts, setLastPts] = useState(0);
     const [countdown, setCountdown] = useState<number | null>(null);
@@ -68,37 +79,77 @@ export default function PlayGame() {
         setInput("");
         setTimerKey(k => k + 1);
         setRoundStartTime(Date.now());
+        setRoundAttempts(0);
 
-        const { data, error } = await supabase!.rpc("get_random_artifact");
+        // Get artifact IDs the user already collected
+        const ownedIds: string[] = [];
+        if (userId) {
+            const { data: owned } = await supabase!
+                .from("user_collections")
+                .select("artifact_id")
+                .eq("user_id", userId);
+            owned?.forEach(r => ownedIds.push(r.artifact_id));
+        }
+
+        let query = supabase!
+            .from("artifacts")
+            .select("id, name, era, region, country_code, museum_name, image_url, description, fun_facts, art_image_url")
+            .limit(50);
+
+        if (ownedIds.length > 0) {
+            query = query.not("id", "in", `(${ownedIds.join(",")})`);
+        }
+
+        const { data, error } = await query;
         if (error) { console.error(error); setLoading(false); return; }
 
-        setArtifact(data?.[0] ?? null);
+        if (!data || data.length === 0) {
+            setArtifact(null);
+            setLoading(false);
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * data.length);
+        setArtifact(data[randomIndex]);
         setLoading(false);
         setTimeout(() => inputRef.current?.focus(), 100);
     }
 
     function answer() {
         if (!artifact) return;
+        const elapsed = (Date.now() - roundStartTime) / 1000;
         const isCorrect = input.trim().toLowerCase() === artifact.name.toLowerCase();
         if (isCorrect) {
-            const elapsed = (Date.now() - roundStartTime) / 1000;
             const pts = elapsed <= 5 ? 100 : Math.max(0, Math.round(100 * (60 - elapsed) / 55));
             setScore(s => s + pts);
             setLastPts(pts);
             setCorrect(c => c + 1);
             applyHearts(MAX_HEARTS);
             setRound("correct");
+            dispatch(unlockArtifact(artifact.id));
+            if (userId) {
+                supabase?.from("user_collections").insert({
+                    user_id: userId,
+                    artifact_id: artifact.id,
+                    attempts_taken: roundAttempts + 1,
+                    time_seconds: Math.round(elapsed),
+                }).then(() => dispatch(fetchUserCollection(userId)));
+                recordAttempt(userId, artifact.id, true, elapsed);
+            }
         } else {
             setLastPts(0);
             setWrong(w => w + 1);
+            setRoundAttempts(a => a + 1);
             applyHearts(hearts - 1);
             setRound("wrong");
+            if (userId) recordAttempt(userId, artifact.id, false, elapsed);
         }
     }
 
     function onTimerExpire() {
         setWrong(w => w + 1);
         applyHearts(hearts - 1);
+        if (userId && artifact) recordAttempt(userId, artifact.id, false, 60);
         if (hearts > 1) fetchRound();
     }
 
