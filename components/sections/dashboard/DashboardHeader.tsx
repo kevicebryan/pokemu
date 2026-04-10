@@ -1,19 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { Anchor, AppShell, Group, Image, Text } from "@mantine/core";
+import { Anchor, AppShell, Burger, Group, Image, Text } from "@mantine/core";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { LOGO_IMAGE_URL, MAX_HEARTS } from "@/util/constant";
 
 type DashboardHeaderProps = {
   heartsLeft: number;
+  mobileNavOpened: boolean;
+  onToggleMobileNav: () => void;
 };
 
-export function DashboardHeader({ heartsLeft }: DashboardHeaderProps) {
+export function DashboardHeader({
+  heartsLeft,
+  mobileNavOpened,
+  onToggleMobileNav,
+}: DashboardHeaderProps) {
   return (
     <AppShell.Header px="md" py="xs" withBorder>
       <Group justify="space-between" align="center" h="100%" wrap="nowrap">
-        <Anchor component={Link} href="/dashboard/profile" display="block" lh={0}>
+        <Group gap="sm" align="center" wrap="nowrap">
+          <Burger
+            hiddenFrom="sm"
+            opened={mobileNavOpened}
+            onClick={onToggleMobileNav}
+            size="sm"
+            aria-label="Open navigation menu"
+          />
+          <Anchor component={Link} href="/dashboard/profile" display="block" lh={0}>
           <Image
             src={LOGO_IMAGE_URL}
             alt="Pokemu"
@@ -23,6 +37,7 @@ export function DashboardHeader({ heartsLeft }: DashboardHeaderProps) {
             style={{ objectPosition: "left" }}
           />
         </Anchor>
+        </Group>
 
         <Group justify="flex-end" align="center" gap="xs" wrap="nowrap">
           <Text size="sm" c="dimmed" visibleFrom="xs">
