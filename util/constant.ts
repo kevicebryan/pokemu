@@ -8,7 +8,7 @@ export const ROOM_BG_IMAGE_URL = "/images/room_bg.png";
 export const POKEMU_ROOM_BG_STORAGE_KEY = "pokemu_room_bg";
 
 /** Max lives / hearts shown in the dashboard header */
-export const MAX_HEARTS = 3;
+export const MAX_HEARTS = 5;
 
 /**
  * Milliseconds between heart refills from `last_heart_reset`.

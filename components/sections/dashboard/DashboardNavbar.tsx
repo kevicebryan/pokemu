@@ -15,6 +15,7 @@ import {
 import type { IconProps } from "@tabler/icons-react";
 import {
   IconBook,
+  IconCompass,
   IconDeviceGamepad,
   IconDoor,
   IconLogout2,
@@ -31,6 +32,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard/play", label: "Play", Icon: IconDeviceGamepad },
+  { href: "/dashboard/explore", label: "Explore", Icon: IconCompass },
   { href: "/dashboard/profile", label: "Profile", Icon: IconUser },
   { href: "/dashboard/collection", label: "Collection", Icon: IconBook },
   { href: "/dashboard/room", label: "Room", Icon: IconDoor },

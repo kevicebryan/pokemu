@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { supabase } from "@/lib/supabase/client";
+import { HEART_REFILL_INTERVAL_MS, MAX_HEARTS } from "@/util/constant";
 
 type ProfileRecord = {
   id: string;
@@ -152,8 +153,34 @@ export const fetchProfileByUserId = createAsyncThunk(
       if (region) unlockedRegions.add(region);
     }
 
+    let profile = profileResult.data as ProfileRecord | null;
+
+    // App-side daily heart refill (keeps working even without DB cron/trigger).
+    if (profile && profile.hearts < MAX_HEARTS && profile.last_heart_reset) {
+      const lastMs = new Date(profile.last_heart_reset).getTime();
+      if (Number.isFinite(lastMs)) {
+        const dueMs = lastMs + HEART_REFILL_INTERVAL_MS;
+        if (Date.now() >= dueMs) {
+          const nowIso = new Date().toISOString();
+          const refillResult = await supabase
+            .from("profiles")
+            .update({ hearts: MAX_HEARTS, last_heart_reset: nowIso })
+            .eq("id", userId)
+            .select(
+              "id, username, hearts, last_heart_reset, total_items_restored, updated_at",
+            )
+            .maybeSingle();
+
+          if (refillResult.error) {
+            return rejectWithValue(refillResult.error.message);
+          }
+          profile = (refillResult.data as ProfileRecord | null) ?? profile;
+        }
+      }
+    }
+
     const result: ProfileFetchResult = {
-      profile: profileResult.data as ProfileRecord | null,
+      profile,
       collectedArtifactCount: collectionRows.length,
       unlockedCountryCodes: Array.from(unlockedCountries).sort(),
       availableCountryCodes: Array.from(availableCountries).sort(),
