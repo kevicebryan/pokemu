@@ -5,14 +5,14 @@ import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setHearts } from "@/redux/slices/profileSlice";
 import { unlockArtifact, fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { MAX_HEARTS } from "@/util/constant";
-import { Box, Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Box, Button, Group, Stack, Text, TextInput, Title, Transition } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import FactBubbles from "./FactBubbles";
 import MosaicImage from "./MosaicImage";
 import ScoreBoard from "./ScoreBoard";
 import Timer from "./Timer";
 
-type Artifact = {
+interface Artifact {
     id: string;
     name: string;
     era: string;
@@ -25,7 +25,9 @@ type Artifact = {
     art_image_url: string;
 };
 
-type RoundState = "playing" | "correct" | "wrong";
+function countryFlag(code: string): string {
+    return code.toUpperCase().replace(/./g, c => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
 
 function maskName(name: string): string {
     return name.split("").map((char, i) => {
@@ -54,7 +56,7 @@ export default function PlayGame() {
     const hearts = useAppSelector(s => Math.min(MAX_HEARTS, Math.max(0, s.profile.profile?.hearts ?? MAX_HEARTS)));
 
     const [artifact, setArtifact] = useState<Artifact | null>(null);
-    const [round, setRound] = useState<RoundState>("playing");
+    const [round, setRound] = useState<"playing" | "correct" | "wrong">("playing");
     const [loading, setLoading] = useState(true);
     const [input, setInput] = useState("");
     const [correct, setCorrect] = useState(0);
@@ -66,6 +68,7 @@ export default function PlayGame() {
     const [secondsLeft, setSecondsLeft] = useState(60);
     const [lastPts, setLastPts] = useState(0);
     const [countdown, setCountdown] = useState<number | null>(null);
+    const [showDeadPage, setShowDeadPage] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
     function applyHearts(next: number) {
@@ -120,7 +123,7 @@ export default function PlayGame() {
         const elapsed = (Date.now() - roundStartTime) / 1000;
         const isCorrect = input.trim().toLowerCase() === artifact.name.toLowerCase();
         if (isCorrect) {
-            const pts = elapsed <= 5 ? 100 : Math.max(0, Math.round(100 * (60 - elapsed) / 55));
+            const pts = elapsed <= 5 ? 100 : Math.max(10, Math.round(100 * (60 - elapsed) / 55));
             setScore(s => s + pts);
             setLastPts(pts);
             setCorrect(c => c + 1);
@@ -159,22 +162,27 @@ export default function PlayGame() {
 
     useEffect(() => {
         if (hearts !== 0) return;
-        setCountdown(30);
+        let remaining = 5;
+        setCountdown(remaining);
         const id = setInterval(() => {
-            setCountdown(prev => {
-                if (prev === null || prev <= 1) {
-                    clearInterval(id);
-                    applyHearts(MAX_HEARTS);
-                    fetchRound();
-                    return null;
-                }
-                return prev - 1;
-            });
+            remaining -= 1;
+            if (remaining <= 0) {
+                clearInterval(id);
+                setCountdown(null);
+                applyHearts(MAX_HEARTS);
+                setCorrect(0);
+                setWrong(0);
+                setScore(0);
+                setShowDeadPage(false);
+                fetchRound();
+            } else {
+                setCountdown(remaining);
+            }
         }, 1000);
         return () => clearInterval(id);
     }, [hearts === 0]);
 
-    if (hearts === 0) {
+    if (showDeadPage) {
         return (
             <Box style={{ height: "calc(100dvh - 64px - 32px)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
                 <Text size="64px" style={{ lineHeight: 1 }}>💀</Text>
@@ -187,68 +195,79 @@ export default function PlayGame() {
     const isCorrect = round === "correct";
     const answered = round !== "playing";
     const facts = artifact?.fun_facts ?? [];
-    const elapsed = 60 - secondsLeft;
-    const revealedFacts = facts.slice(0, Math.floor(elapsed / 15));
+    const healthLow = hearts <= 1;
+    const revealedFacts: string[] = [];
+    if (facts.length > 0 && (healthLow || secondsLeft <= 20)) revealedFacts.push(facts[0]);
+    if (facts.length > 1 && secondsLeft <= 10) revealedFacts.push(facts[1]);
 
     return (
-        <Box style={{ height: "calc(100dvh - 64px - 32px)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-            {/* Top bar */}
-            <Group justify="space-between" align="center" mb="xs">
-                <Group align="center" gap="xl">
-                    <Title order={2}>Play</Title>
-                    <ScoreBoard correct={correct} wrong={wrong} score={score} />
-                    {answered && (
-                        <Group gap="xs" align="center">
-                            <Text fw={700} c={isCorrect ? "green" : "red"}>
-                                {isCorrect ? "✅ Correct!" : "❌ Wrong!"}
-                            </Text>
-                            <Text size="sm" c="dimmed">— {artifact?.name}</Text>
-                            {isCorrect && <Text fw={600} c="yellow">+{lastPts} pts</Text>}
-                        </Group>
-                    )}
-                </Group>
-                <Timer key={timerKey} onExpire={onTimerExpire} stopped={answered} onTick={setSecondsLeft} />
-            </Group>
+        <Box style={{ height: "calc(100dvh - 64px - 32px)", display: "flex", flexDirection: "column", gap: 12 }}>
+            {/* Timer bar: full width at top */}
+            <Timer key={timerKey} onExpire={onTimerExpire} stopped={answered} onTick={setSecondsLeft} />
 
-            {/* Image fills remaining space */}
-            <Box style={{ flex: 1, minHeight: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }} my="xs">
+            {/* Main row */}
+            <Box style={{ flex: 1, minHeight: 0, display: "flex", gap: 24, overflow: "visible" }}>
+            {/* Left: image only */}
+            <Box style={{ flex: 1, position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "visible" }}>
                 {artifact?.image_url && (
                     !answered
-                        ? <MosaicImage src={artifact.image_url} size={32} style={{ maxWidth: "100%", maxHeight: "100%", display: "block" }} />
-                        : <img src={artifact.image_url} alt="artifact" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block" }} />
+                        ? <MosaicImage src={artifact.image_url} size={32} style={{ maxWidth: "100%", maxHeight: "100%", display: "block", transition: "opacity 0.4s ease" }} />
+                        : <img src={artifact.image_url} alt="artifact" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain", display: "block", transition: "opacity 0.4s ease", animation: "fadeIn 0.4s ease" }} />
                 )}
                 {!answered && <FactBubbles facts={revealedFacts} />}
             </Box>
 
-            {/* Bottom controls */}
-            <Stack gap="xs" style={{ flexShrink: 0 }}>
-                {round !== "playing" ? <Group gap="xl">
-                    <Text size="sm"><b>Era:</b> {artifact?.era ?? "—"}</Text>
-                    <Text size="sm"><b>Region:</b> {artifact?.region ?? "—"}</Text>
-                    <Text size="sm"><b>Country:</b> {artifact?.country_code ?? "—"}</Text>
-                    <Text size="sm"><b>Museum:</b> {artifact?.museum_name ?? "—"}</Text>
-                </Group> : null}
+            {/* Right: controls */}
+            <Stack gap={0} style={{ width: 360, flexShrink: 0, height: "100%", paddingTop: "15%" }}>
 
-                <Text fw={700} size="lg" ff="monospace" ta="center" style={{ letterSpacing: 2 }} c={answered ? (isCorrect ? "green" : "red") : undefined}>
-                    {artifact ? (answered ? artifact.name : maskName(artifact.name)) : "—"}
-                </Text>
+                {/* Fixed content: score + name + input */}
+                <Stack gap="lg" align="center">
+                    <ScoreBoard correct={correct} wrong={wrong} score={score} />
+                    <Stack gap="sm" style={{ width: "100%" }}>
+                        <Text fw={700} size="xl" ff="monospace" ta="center" style={{ letterSpacing: 3, transition: "color 0.3s ease" }} c={answered ? (isCorrect ? "green" : "red") : undefined}>
+                            {artifact ? (answered ? artifact.name : maskName(artifact.name)) : "—"}
+                        </Text>
+                        <Group align="flex-end">
+                            <TextInput
+                                ref={inputRef}
+                                style={{ flex: 1 }}
+                                size="md"
+                                placeholder="Type the artifact name..."
+                                value={input}
+                                onChange={e => setInput(e.currentTarget.value)}
+                                onKeyDown={e => { if (e.key === "Enter") answer(); }}
+                                disabled={answered || loading}
+                            />
+                            {answered
+                                ? <Button size="md" onClick={() => hearts === 0 ? setShowDeadPage(true) : fetchRound()}>Next</Button>
+                                : <Button size="md" onClick={answer} loading={loading}>Submit</Button>
+                            }
+                        </Group>
+                    </Stack>
+                </Stack>
 
-                <Group align="flex-end">
-                    <TextInput
-                        ref={inputRef}
-                        style={{ flex: 1 }}
-                        placeholder="Type the artifact name..."
-                        value={input}
-                        onChange={e => setInput(e.currentTarget.value)}
-                        onKeyDown={e => { if (e.key === "Enter") answer(); }}
-                        disabled={answered || loading}
-                    />
-                    {answered
-                        ? <Button onClick={fetchRound}>Next</Button>
-                        : <Button onClick={answer} loading={loading}>Submit</Button>
-                    }
-                </Group>
+                {/* Info slides in below input without shifting anything above */}
+                <Transition mounted={answered} transition="slide-up" duration={300} timingFunction="ease">
+                    {styles => (
+                        <Stack gap="xs" mt={10} mb={8} align="center" style={styles}>
+                            <Group gap="xs" align="center">
+                                <Text fw={700} size="lg" c={isCorrect ? "green" : "red"}>
+                                    {isCorrect ? "✅ Correct!" : "❌ Wrong!"}
+                                </Text>
+                                {isCorrect && <Text fw={600} size="lg" c="yellow">+{lastPts} pts</Text>}
+                            </Group>
+                            {hearts === 0 && countdown !== null && (
+                                <Text size="sm" c="dimmed">💀 Restoring lives in <b style={{ color: "white" }}>{countdown}s</b>…</Text>
+                            )}
+                            <Text size="lg" ta="center"><b>Era:</b> {artifact?.era ?? "—"}</Text>
+                            <Text size="lg" ta="center"><b>Region:</b> {artifact?.region ?? "—"}</Text>
+                            <Text size="lg" ta="center"><b>Country:</b> {artifact?.country_code ? `${countryFlag(artifact.country_code)} ${artifact.country_code}` : "—"}</Text>
+                            <Text size="lg" ta="center"><b>Museum:</b> {artifact?.museum_name ?? "—"}</Text>
+                        </Stack>
+                    )}
+                </Transition>
             </Stack>
+            </Box>
         </Box>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { RingProgress, Text } from "@mantine/core";
+import { Group, Progress, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 
 const TOTAL = 60;
@@ -26,16 +26,9 @@ export default function Timer({ onExpire, onTick, stopped = false }: Props) {
     const color = seconds > 30 ? "green" : seconds > 10 ? "orange" : "red";
 
     return (
-        <RingProgress
-            size={64}
-            thickness={6}
-            roundCaps
-            sections={[{ value: pct, color }]}
-            label={
-                <Text ta="center" size="xs" fw={700} c={color}>
-                    {seconds}s
-                </Text>
-            }
-        />
+        <Group gap="sm" align="center" style={{ width: "100%" }}>
+            <Text size="xl" fw={800} c={color} style={{ minWidth: 48, textAlign: "right" }}>{seconds}s</Text>
+            <Progress value={pct} color={color} size="lg" radius="xl" style={{ flex: 1 }} />
+        </Group>
     );
 }

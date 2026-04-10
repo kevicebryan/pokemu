@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface Bubble {
     id: number;
@@ -23,21 +24,25 @@ export default function FactBubbles({ facts }: Props) {
     useEffect(() => {
         if (facts.length <= seenCount.current) return;
 
+        let delay = 0;
         for (let i = seenCount.current; i < facts.length; i++) {
             const id = ++idRef.current;
-            const x = 8 + Math.random() * 62; // keep within 8–70% so text doesn't clip
-
-            setBubbles(prev => [...prev, { id, text: facts[i], x }]);
+            const x = 8 + Math.random() * 62;
 
             setTimeout(() => {
-                setBubbles(prev => prev.filter(b => b.id !== id));
-            }, STAY_MS + EXIT_MS);
+                setBubbles(prev => [...prev, { id, text: facts[i], x }]);
+                setTimeout(() => {
+                    setBubbles(prev => prev.filter(b => b.id !== id));
+                }, STAY_MS + EXIT_MS);
+            }, delay);
+
+            delay += STAY_MS + EXIT_MS; // wait for previous bubble to finish before next
         }
 
         seenCount.current = facts.length;
     }, [facts]);
 
-    return (
+    return createPortal(
         <>
             <style>{`
                 @keyframes fact-float {
@@ -51,11 +56,11 @@ export default function FactBubbles({ facts }: Props) {
                 <div
                     key={b.id}
                     style={{
-                        position: "absolute",
+                        position: "fixed",
                         left: `${b.x}%`,
-                        bottom: 0,
+                        bottom: 40,
                         transform: "translateX(-50%)",
-                        background: "rgba(20,20,20,0.82)",
+                        background: "#FA500F",
                         backdropFilter: "blur(6px)",
                         color: "#fff",
                         borderRadius: 999,
@@ -66,7 +71,7 @@ export default function FactBubbles({ facts }: Props) {
                         whiteSpace: "normal",
                         textAlign: "center",
                         pointerEvents: "none",
-                        zIndex: 20,
+                        zIndex: 9999,
                         boxShadow: "0 4px 16px rgba(0,0,0,0.35)",
                         animation: `fact-float ${STAY_MS + EXIT_MS}ms ease-in-out forwards`,
                     }}
@@ -74,6 +79,7 @@ export default function FactBubbles({ facts }: Props) {
                     💡 {b.text}
                 </div>
             ))}
-        </>
+        </>,
+        document.body
     );
 }
