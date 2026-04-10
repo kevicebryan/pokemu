@@ -51,7 +51,13 @@ const ProfileSection = () => {
   const availableCountryCodes = useAppSelector(
     (state) => state.profile.availableCountryCodes,
   );
+  const artifactsByCountryCode = useAppSelector(
+    (state) => state.profile.artifactsByCountryCode,
+  );
   const profileStatus = useAppSelector((state) => state.profile.status);
+  const collectedArtifactCount = useAppSelector(
+    (state) => state.profile.collectedArtifactCount,
+  );
   const [initialProfileFetchDone, setInitialProfileFetchDone] = useState(false);
 
   useEffect(() => {
@@ -147,12 +153,14 @@ const ProfileSection = () => {
               Artifacts restored
             </Title>
             <Text size="sm" c="dimmed">
-              {profile?.total_items_restored ?? 0} items guessed correctly
+              {collectedArtifactCount} item
+              {collectedArtifactCount === 1 ? "" : "s"} scavanged
             </Text>
           </Stack>
           <AsciiAtlas
             filledCountryCodes={unlockedCountryCodes}
             availableCountryCodes={availableCountryCodes}
+            artifactsByCountryCode={artifactsByCountryCode}
           />
         </Stack>
       ) : null}

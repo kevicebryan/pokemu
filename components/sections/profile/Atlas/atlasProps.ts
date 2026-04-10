@@ -3,4 +3,9 @@ export type AsciiAtlasProps = {
   filledCountryCodes?: string[];
   /** ISO 3166-1 alpha-2 codes that appear in your artifacts catalog (shown as markers). */
   availableCountryCodes?: string[];
+  /**
+   * Optional labels for hover tooltips.
+   * Key is ISO2 country code (e.g. "US"), value is artifact name(s).
+   */
+  artifactsByCountryCode?: Record<string, string | string[]>;
 };

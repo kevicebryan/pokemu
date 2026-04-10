@@ -17,6 +17,7 @@ const GlobeCanvas = dynamic<AsciiAtlasProps>(
 export default function AsciiAtlas({
   filledCountryCodes = [],
   availableCountryCodes = [],
+  artifactsByCountryCode,
 }: AsciiAtlasProps) {
   return (
     <Box
@@ -32,6 +33,7 @@ export default function AsciiAtlas({
       <GlobeCanvas
         filledCountryCodes={filledCountryCodes}
         availableCountryCodes={availableCountryCodes}
+        artifactsByCountryCode={artifactsByCountryCode}
       />
     </Box>
   );
