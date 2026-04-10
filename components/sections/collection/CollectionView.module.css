@@ -1,0 +1,105 @@
+.gridCard {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  border: 3px solid var(--mantine-color-mistral-filled);
+  border-radius: 0;
+  background: var(--mantine-color-body);
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.gridCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0 var(--mantine-color-mistral-4);
+}
+
+.gridCard:focus-visible {
+  outline: 2px solid var(--mantine-color-mistral-filled);
+  outline-offset: 2px;
+}
+
+.gridCard:disabled {
+  opacity: 1;
+}
+
+.pixelThumb {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.lockedCard {
+  cursor: pointer;
+}
+
+.lockedCard:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.lockedImage {
+  image-rendering: pixelated;
+  filter: grayscale(1) contrast(0.55) brightness(0.75) saturate(0.1);
+  transform: scale(1.08);
+}
+
+.lockedCanvas {
+  image-rendering: pixelated;
+  filter: grayscale(1) contrast(0.5) brightness(0.68) saturate(0.05);
+  transform: scale(1.12);
+}
+
+.lockedBadge {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  padding: 2px 6px;
+  border: 2px solid var(--mantine-color-dark-8);
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--mantine-color-dark-8);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.thumbPlaceholder {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mantine-color-gray-3);
+  color: var(--mantine-color-dimmed);
+  font-family: var(--mantine-font-family-headings);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
+.realPhoto {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  max-height: min(52vh, 420px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  image-rendering: auto;
+  border-radius: 0;
+}
+
+.facts {
+  font-size: var(--mantine-font-size-sm);
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.counterBadge {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
