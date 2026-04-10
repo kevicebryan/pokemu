@@ -5,6 +5,7 @@ import {
   AppShell,
   Box,
   Button,
+  Group,
   NavLink,
   Stack,
   Text,
@@ -66,25 +67,28 @@ export function DashboardNavbar({ pathname, onLogout }: DashboardNavbarProps) {
         </Stack>
 
         <Stack gap="xs" p="sm" className={styles.footerControls}>
-          <UnstyledButton
-            className={styles.themeToggle}
-            type="button"
-            onClick={() => setColorScheme(isDark ? "light" : "dark")}
-            aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-            title={`Switch to ${isDark ? "light" : "dark"} mode`}
-          >
-            <Box className={styles.toggleTrack} data-dark={isDark || undefined}>
-              <Box className={styles.toggleKnob} data-dark={isDark || undefined}>
-                <Box className={styles.toggleKnobInner} data-dark={isDark || undefined}>
-                  <IconSun size={13} className={`${styles.knobIcon} ${styles.knobSun}`} />
-                  <IconMoonStars size={13} className={`${styles.knobIcon} ${styles.knobMoon}`} />
+          <Group gap={"xs"}>
+            <UnstyledButton
+              className={styles.themeToggle}
+              type="button"
+              onClick={() => setColorScheme(isDark ? "light" : "dark")}
+              aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+              title={`Switch to ${isDark ? "light" : "dark"} mode`}
+            >
+
+              <Box className={styles.toggleTrack} data-dark={isDark || undefined}>
+                <Box className={styles.toggleKnob} data-dark={isDark || undefined}>
+                  <Box className={styles.toggleKnobInner} data-dark={isDark || undefined}>
+                    <IconSun size={12} className={`${styles.knobIcon} ${styles.knobSun}`} />
+                    <IconMoonStars size={12} className={`${styles.knobIcon} ${styles.knobMoon}`} />
+                  </Box>
                 </Box>
               </Box>
-            </Box>
+            </UnstyledButton>
             <Text size="xs" fw={700} className={styles.toggleLabel}>
               {isDark ? "Dark mode" : "Light mode"}
             </Text>
-          </UnstyledButton>
+          </Group>
           <Button
             variant="transparent"
             w="fit-content"
@@ -96,6 +100,6 @@ export function DashboardNavbar({ pathname, onLogout }: DashboardNavbarProps) {
           </Button>
         </Stack>
       </Stack>
-    </AppShell.Navbar>
+    </AppShell.Navbar >
   );
 }

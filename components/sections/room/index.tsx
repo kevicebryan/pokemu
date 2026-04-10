@@ -72,12 +72,7 @@ const RoomSection = () => {
           </Text>
         ) : others.length === 0 ? (
           <Text size="sm" c="dimmed">
-            No other decorated rooms yet. If another ranger already placed
-            artifacts and nothing shows here, run{" "}
-            <Text component="span" fz="xs" ff="monospace" c="dimmed" inherit>
-              supabase/migrations/20260410180000_room_discovery_rls.sql
-            </Text>{" "}
-            in Supabase so signed-in users can read other rooms (RLS).
+            No other decorated rooms yet.
           </Text>
         ) : (
           <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} spacing="md">
