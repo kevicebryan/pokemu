@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell, Box, Overlay, useMantineTheme } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useBuyHearts } from "@/hooks/useBuyHearts";
 import { supabase } from "@/lib/supabase/client";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { clearAuthUser } from "@/redux/slices/authSlice";
@@ -11,6 +12,7 @@ import { clearProfile } from "@/redux/slices/profileSlice";
 import { MAX_HEARTS } from "@/util/constant";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardNavbar } from "./DashboardNavbar";
+import { StripeCheckoutReturn } from "./StripeCheckoutReturn";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -31,6 +33,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
     MAX_HEARTS,
     Math.max(0, profile?.hearts ?? MAX_HEARTS),
   );
+
+  const { startCheckout: buyHearts, loading: buyHeartsLoading } = useBuyHearts();
 
   useEffect(() => {
     if (initialized && !isAuthenticated) {
@@ -72,10 +76,15 @@ export function DashboardShell({ children }: DashboardShellProps) {
       }}
       styles={{ main: { background: "var(--pokemu-bg)" } }}
     >
+      <Suspense fallback={null}>
+        <StripeCheckoutReturn />
+      </Suspense>
       <DashboardHeader
         heartsLeft={heartsLeft}
         mobileNavOpened={mobileNavOpened}
         onToggleMobileNav={toggleMobileNav}
+        onBuyHearts={buyHearts}
+        buyHeartsLoading={buyHeartsLoading}
       />
       <DashboardNavbar pathname={pathname} onLogout={handleLogout} />
 

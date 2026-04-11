@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ActionIcon, Anchor, AppShell, Burger, Group, Image, Text } from "@mantine/core";
+import { ActionIcon, Anchor, AppShell, Burger, Group, Image, Text, UnstyledButton } from "@mantine/core";
 import { IconHeart, IconHeartFilled, IconMusic, IconMusicOff, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 import { HOME_BGM_SRC, LOGO_IMAGE_URL, MAX_HEARTS } from "@/util/constant";
 
@@ -25,12 +25,16 @@ type DashboardHeaderProps = {
   heartsLeft: number;
   mobileNavOpened: boolean;
   onToggleMobileNav: () => void;
+  onBuyHearts?: () => void;
+  buyHeartsLoading?: boolean;
 };
 
 export function DashboardHeader({
   heartsLeft,
   mobileNavOpened,
   onToggleMobileNav,
+  onBuyHearts,
+  buyHeartsLoading = false,
 }: DashboardHeaderProps) {
   const [isMusicEnabled, setIsMusicEnabled] = useState(true);
   const dashboardMusicRef = useRef<HTMLAudioElement | null>(null);
@@ -105,26 +109,48 @@ export function DashboardHeader({
           <Text size="sm" c="dimmed" visibleFrom="xs">
             {heartsLeft}/{MAX_HEARTS}
           </Text>
-          <Group gap={4} wrap="nowrap">
-            {Array.from({ length: MAX_HEARTS }, (_, index) => {
-              const filled = index < heartsLeft;
-              return filled ? (
-                <IconHeartFilled
-                  key={index}
-                  size={22}
-                  color="var(--mantine-color-mistral-6)"
-                  stroke={1.5}
-                />
-              ) : (
-                <IconHeart
-                  key={index}
-                  size={22}
-                  color="var(--mantine-color-dimmed)"
-                  stroke={1.5}
-                />
-              );
-            })}
-          </Group>
+          {heartsLeft === 0 && onBuyHearts ? (
+            <UnstyledButton
+              type="button"
+              onClick={() => onBuyHearts()}
+              disabled={buyHeartsLoading}
+              title="Buy full lives (secure card checkout)"
+              aria-label="Buy full lives"
+              style={{ cursor: buyHeartsLoading ? "wait" : "pointer" }}
+            >
+              <Group gap={4} wrap="nowrap">
+                {Array.from({ length: MAX_HEARTS }, (_, index) => (
+                  <IconHeart
+                    key={index}
+                    size={22}
+                    color="var(--mantine-color-dimmed)"
+                    stroke={1.5}
+                  />
+                ))}
+              </Group>
+            </UnstyledButton>
+          ) : (
+            <Group gap={4} wrap="nowrap">
+              {Array.from({ length: MAX_HEARTS }, (_, index) => {
+                const filled = index < heartsLeft;
+                return filled ? (
+                  <IconHeartFilled
+                    key={index}
+                    size={22}
+                    color="var(--mantine-color-mistral-6)"
+                    stroke={1.5}
+                  />
+                ) : (
+                  <IconHeart
+                    key={index}
+                    size={22}
+                    color="var(--mantine-color-dimmed)"
+                    stroke={1.5}
+                  />
+                );
+              })}
+            </Group>
+          )}
         </Group>
       </Group>
     </AppShell.Header>
