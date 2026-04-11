@@ -137,6 +137,9 @@ export default function Home() {
         bg={SKY_BG}
         pos={"relative"}
         onPointerDownCapture={tryResumeMusicFromGesture}
+        style={{
+          overflow: "hidden",
+        }}
       >
         <Group
           gap={8}
@@ -235,6 +238,17 @@ export default function Home() {
           <Box h={40} w="100%" bg="mistral.6" style={{ zIndex: 1 }} />
           <Box h={40} w="100%" bg="mistral.8" style={{ zIndex: 3 }} />
         </Stack>
+        <Image src={"/images/app_bg.png"} alt="app_bg" width={1024} height={1024}
+          style={{
+            position: "absolute",
+            bottom: "-20vh",
+            left: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 0,
+          }}
+        />
       </Center>
     </>
   );

@@ -22,6 +22,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { setAuthUser } from "@/redux/slices/authSlice";
 import { fetchProfileByUserId } from "@/redux/slices/profileSlice";
+import Image from "next/image";
 
 export function LoginForm() {
   const router = useRouter();
@@ -98,11 +99,15 @@ export function LoginForm() {
   };
 
   return (
-    <Center component="section" mih="100vh" p={24}>
+    <Center component="section" mih="100vh" p={24} pos={"relative"} style={{ overflow: "hidden" }}>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
+        style={{
+          position: "relative",
+          zIndex: 1,
+        }}
       >
         <Container size={460} p={0}>
           <Card>
@@ -142,6 +147,18 @@ export function LoginForm() {
           </Card>
         </Container>
       </motion.div>
+
+      <Image src={"/images/app_bg.png"} alt="app_bg" width={1024} height={1024}
+        style={{
+          position: "absolute",
+          bottom: "-20vh",
+          left: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          zIndex: 0,
+        }}
+      />
     </Center>
   );
 }
