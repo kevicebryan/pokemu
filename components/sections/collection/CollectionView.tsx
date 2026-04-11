@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import {
   ActionIcon,
   Alert,
+  Anchor,
   Badge,
   Box,
   Button,
@@ -39,6 +40,53 @@ function countryCodeToFlagUrl(code?: string): string | null {
   const cc = normalizeCountryCode(code);
   if (!cc) return null;
   return `https://flagcdn.com/w20/${cc.toLowerCase()}.png`;
+}
+
+function sanitizeHttpsUrl(raw: string | undefined): string | null {
+  const t = raw?.trim();
+  if (!t) return null;
+  try {
+    const u = new URL(t);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}
+
+/** Dossier heading link: only Supabase `map_url` (sanitized https). */
+function resolveMuseumMapsUrl(artifact: CollectionArtifact): string | null {
+  return sanitizeHttpsUrl(artifact.mapUrl);
+}
+
+function dossierHeadingText(artifact: CollectionArtifact): string {
+  const museum = artifact.museumName?.trim();
+  const country =
+    artifact.countryName?.trim() ||
+    (artifact.countryCode ? countryCodeToName(artifact.countryCode) : "") ||
+    "";
+  const parts = [museum, country].filter(Boolean);
+  return parts.length ? parts.join(" · ") : "Dossier";
+}
+
+function DossierPanelHeading({ artifact }: { artifact: CollectionArtifact }) {
+  const mapsUrl = resolveMuseumMapsUrl(artifact);
+  const text = dossierHeadingText(artifact);
+  if (mapsUrl) {
+    return (
+      <Anchor
+        href={mapsUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.intelPanelTitleLink}
+        underline="hover"
+        title="Open map"
+      >
+        {text}
+      </Anchor>
+    );
+  }
+  return text;
 }
 
 /**
@@ -196,12 +244,12 @@ function parseIntelText(text: string): ParsedIntel {
   };
 }
 
-function IntelPanel({ label, children }: { label: string; children: ReactNode }) {
+function IntelPanel({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
     <Paper radius={0} className={styles.intelPanel} p="md">
-      <Text component="h3" className={styles.intelPanelTitle}>
+      <Box component="h3" className={styles.intelPanelTitle}>
         {label}
-      </Text>
+      </Box>
       {children}
     </Paper>
   );
@@ -676,7 +724,7 @@ export function CollectionView({ initialCountryCode = null }: CollectionViewProp
               </Text>
             )}
             {selected.facts?.trim() ? (
-              <IntelPanel label="Dossier">
+              <IntelPanel label={<DossierPanelHeading artifact={selected} />}>
                 <IntelBody text={selected.facts} variant="dossier" />
               </IntelPanel>
             ) : (

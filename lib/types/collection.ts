@@ -11,4 +11,8 @@ export type CollectionArtifact = {
   countryCode?: string;
   /** Optional: human readable country name (e.g. "China"). */
   countryName?: string;
+  /** Optional: home museum / venue display name. */
+  museumName?: string;
+  /** Optional: map link from Supabase `map_url` (https only). */
+  mapUrl?: string;
 };

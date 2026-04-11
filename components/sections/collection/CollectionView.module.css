@@ -117,6 +117,17 @@
   padding-bottom: var(--mantine-spacing-xs);
   margin-bottom: var(--mantine-spacing-sm);
   border-bottom: 2px solid var(--mantine-color-mistral-filled);
+  margin-top: 0;
+}
+
+.intelPanelTitleLink {
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .intelLeadIn {
