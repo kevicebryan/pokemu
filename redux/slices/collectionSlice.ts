@@ -61,6 +61,9 @@ export function mapArtifactRow(row: ArtifactRow): CollectionArtifact | null {
     year: pickYear(row, ["year", "artifact_year", "era", "date", "origin_year"]),
     countryCode,
     countryName: pickStr(row, ["country_name", "country", "origin_country", "origin"], "") || undefined,
+    museumName:
+      pickStr(row, ["museum_name", "museumName", "home_museum", "venue_name", "institution"], "") || undefined,
+    mapUrl: pickStr(row, ["map_url", "mapUrl"], "") || undefined,
   };
 }
 
