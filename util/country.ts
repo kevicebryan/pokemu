@@ -16,6 +16,13 @@ export function countryCodeToName(countryCode: string): string {
   return ISO2_TO_NAME.get(code) ?? code;
 }
 
+/** Small PNG flag URL (flagcdn); same source as collection UI. */
+export function countryCodeToFlagUrl(code?: string | null): string | null {
+  const cc = code?.trim().toUpperCase();
+  if (!cc || !/^[A-Z]{2}$/.test(cc)) return null;
+  return `https://flagcdn.com/w20/${cc.toLowerCase()}.png`;
+}
+
 export function formatCountryLabel(countryCode: string): string {
   const code = countryCode.trim().toUpperCase();
   const flag = countryCodeToFlagEmoji(code);
