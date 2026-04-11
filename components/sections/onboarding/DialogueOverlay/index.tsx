@@ -351,6 +351,21 @@ const DialogueOverlay = ({ dialogues, onClose, onStart }: DialogueOverlayProps) 
             </Flex>
           </Flex>
         </Card>
+
+        <Stack
+          gap={0}
+          pos="absolute"
+          bottom={0}
+          left={0}
+          right={0}
+          w="100%"
+          style={{ zIndex: 0 }}
+        >
+          <Box h={12} w="100%" bg="mistral.2" style={{ zIndex: 1 }} />
+          <Box h={12} w="100%" bg="mistral.4" style={{ zIndex: 1 }} />
+          <Box h={12} w="100%" bg="mistral.6" style={{ zIndex: 1 }} />
+          <Box h={12} w="100%" bg="mistral.8" style={{ zIndex: 3 }} />
+        </Stack>
       </Box>
     </>
   );
