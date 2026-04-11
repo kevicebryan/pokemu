@@ -114,7 +114,7 @@ const TypingLine = ({ line, typingAudioRef }: TypingLineProps) => {
   const shown = line.slice(0, visibleCount);
 
   return (
-    <Text size="md" ta="center" style={{ minHeight: "1.5em" }}>
+    <Text size="md" ta="center" c="black" style={{ minHeight: "1.5em" }}>
       {shown}
       {visibleCount < line.length ? (
         <Box component="span" ml={4} display="inline" aria-hidden>
