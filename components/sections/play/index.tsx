@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase/client";
+import { useBuyHearts } from "@/hooks/useBuyHearts";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { unlockArtifact, fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { setHearts } from "@/redux/slices/profileSlice";
@@ -103,6 +104,7 @@ export default function PlaySection() {
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
   const { width, height } = useViewportSize();
   const isMobile = useMediaQuery("(max-width: 48em)");
+  const { startCheckout: buyHearts, loading: buyHeartsLoading } = useBuyHearts();
 
   function playResultAudio(isCorrect: boolean) {
     const audio = isCorrect ? correctAudioRef.current : wrongAudioRef.current;
@@ -335,6 +337,12 @@ export default function PlaySection() {
         <Title order={2}>Out of Lives</Title>
         <Text c="dimmed" ta="center">
           Check back again in <b style={{ color: "white" }}>{checkBackIn ?? "..."}</b>.
+        </Text>
+        <Button onClick={buyHearts} loading={buyHeartsLoading}>
+          Buy full lives (card)
+        </Button>
+        <Text size="xs" c="dimmed" ta="center" maw={320}>
+          Opens Stripe Checkout. You can also tap the hearts in the header when you&apos;re at 0 lives.
         </Text>
       </Box>
     );
