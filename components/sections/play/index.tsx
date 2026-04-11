@@ -104,6 +104,7 @@ export default function PlaySection() {
   const inputRef = useRef<HTMLInputElement>(null);
   const correctAudioRef = useRef<HTMLAudioElement | null>(null);
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
+  const moveToNextRoundRef = useRef<() => Promise<void>>(async () => {});
   const { width, height } = useViewportSize();
   const isMobile = useMediaQuery("(max-width: 48em)");
   const { openOutOfHeartsModal } = useOutOfHeartsModal();
@@ -178,6 +179,8 @@ export default function PlaySection() {
     await fetchRound();
   }
 
+  moveToNextRoundRef.current = moveToNextRound;
+
   function answer() {
     if (!artifact) return;
     const elapsed = elapsedSeconds;
@@ -209,11 +212,19 @@ export default function PlaySection() {
     playResultAudio(false);
     const nextHearts = hearts - 1;
     applyHearts(nextHearts);
+    setShowWrongAnswer(false);
     setRound("wrong");
     if (userId) {
       void recordAttempt(userId, artifact.id, false, elapsed);
     }
   }
+
+  /** Stable string so effect dependency arrays stay a fixed shape (React Compiler / Fast Refresh). */
+  const artifactIdKey = artifact?.id ?? "";
+
+  /** One key per "schedule advance" episode; unchanged when only `hearts` updates mid wrong/correct. */
+  const advanceScheduleKey =
+    round === "correct" || round === "wrong" ? `${round}:${artifactIdKey}` : "";
 
   useEffect(() => {
     if (hearts > 0) {
@@ -230,29 +241,7 @@ export default function PlaySection() {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
     return () => window.clearInterval(id);
-  }, [artifact?.id, round]);
-
-  useEffect(() => {
-    if (!artifact || round !== "playing") return;
-    const id = window.setInterval(() => {
-      const target = artifact.name;
-      setInput((prev) => {
-        const padded = prev.padEnd(target.length, " ").split("");
-        const candidates: number[] = [];
-        for (let i = 0; i < target.length; i += 1) {
-          if (target[i] === " ") continue;
-          if ((padded[i] ?? "").toLowerCase() !== target[i].toLowerCase()) {
-            candidates.push(i);
-          }
-        }
-        if (candidates.length === 0) return prev;
-        const revealIndex = candidates[Math.floor(Math.random() * candidates.length)];
-        padded[revealIndex] = target[revealIndex];
-        return padded.join("").trimEnd();
-      });
-    }, 25000);
-    return () => window.clearInterval(id);
-  }, [artifact?.id, round]);
+  }, [artifactIdKey, round]);
 
   useEffect(() => {
     if (round !== "correct") return;
@@ -263,16 +252,18 @@ export default function PlaySection() {
   useEffect(() => {
     if (round !== "correct" && round !== "wrong") return;
     const id = window.setTimeout(() => {
-      void moveToNextRound();
+      void moveToNextRoundRef.current();
     }, 5000);
     return () => window.clearTimeout(id);
-  }, [round, hearts, userId]);
+  }, [advanceScheduleKey]);
 
   useEffect(() => {
     if (round !== "wrong") return;
-    const id = window.setTimeout(() => setShowWrongAnswer(true), 3000);
+    const id = window.setTimeout(() => {
+      setShowWrongAnswer(true);
+    }, 3000);
     return () => window.clearTimeout(id);
-  }, [round]);
+  }, [artifactIdKey, round]);
 
   useEffect(() => {
     if (hearts !== 0) return;
