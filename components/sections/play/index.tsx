@@ -11,7 +11,7 @@ import { useMediaQuery, useViewportSize } from "@mantine/hooks";
 import { Badge, Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { IconClockHour4 } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Confetti from "react-confetti";
 import FactBubbles from "./FactBubbles";
 import MosaicImage from "./MosaicImage";
@@ -179,7 +179,10 @@ export default function PlaySection() {
     await fetchRound();
   }
 
-  moveToNextRoundRef.current = moveToNextRound;
+  /** Keep latest `moveToNextRound` for timeouts without retriggering effect deps (not during render). */
+  useLayoutEffect(() => {
+    moveToNextRoundRef.current = moveToNextRound;
+  }, [moveToNextRound]);
 
   function answer() {
     if (!artifact) return;
@@ -357,21 +360,34 @@ export default function PlaySection() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                minHeight: 220,
+                minHeight: isMobile ? "min(220px, 38svh)" : 220,
+                minWidth: 0,
+                alignSelf: "stretch",
               }}
             >
               {artifact?.image_url && !answered ? (
                 <MosaicImage
                   src={artifact.image_url}
                   elapsedSeconds={elapsedSeconds}
-                  style={{ maxWidth: "100%", maxHeight: "40vh", width: "auto", display: "block" }}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: isMobile ? "min(40svh, 280px)" : "40vh",
+                    width: "auto",
+                    display: "block",
+                  }}
                 />
               ) : null}
               {artifact?.image_url && answered ? (
                 <img
                   src={artifact.image_url}
                   alt="artifact"
-                  style={{ maxWidth: "100%", maxHeight: "45vh", width: "auto", objectFit: "contain", display: "block" }}
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: isMobile ? "min(45svh, 300px)" : "45vh",
+                    width: "auto",
+                    objectFit: "contain",
+                    display: "block",
+                  }}
                 />
               ) : null}
             </Box>
