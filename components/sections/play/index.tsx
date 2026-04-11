@@ -5,7 +5,7 @@ import { useOutOfHeartsModal } from "@/components/sections/dashboard/OutOfHearts
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { unlockArtifact, fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { fetchProfileByUserId, setHearts } from "@/redux/slices/profileSlice";
-import { countryCodeToName } from "@/util/country";
+import { countryCodeToFlagUrl, countryCodeToName } from "@/util/country";
 import { MAX_HEARTS } from "@/util/constant";
 import { useMediaQuery, useViewportSize } from "@mantine/hooks";
 import { Badge, Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
@@ -33,6 +33,10 @@ interface Artifact {
 
 type RoundState = "playing" | "correct" | "wrong";
 
+type TimedHint =
+  | { kind: "country"; key: string; code: string; name: string }
+  | { kind: "text"; key: string; text: string };
+
 function maskName(name: string): string {
   return name
     .split("")
@@ -42,12 +46,6 @@ function maskName(name: string): string {
       return i === wordStart ? char : "_";
     })
     .join("");
-}
-
-function countryFlag(code: string): string {
-  return code
-    .toUpperCase()
-    .replace(/./g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0)));
 }
 
 function formatTimeUntil(targetMs: number): string {
@@ -289,15 +287,28 @@ export default function PlaySection() {
   const answered = round !== "playing";
   const visibleFactCount = Math.min((artifact?.fun_facts ?? []).length, Math.floor(elapsedSeconds / 10));
 
-  const timedImageHints = useMemo(() => {
+  const timedImageHints = useMemo((): TimedHint[] => {
     if (!artifact) return [];
-    const hints: string[] = [];
+    const hints: TimedHint[] = [];
     if (artifact.country_code) {
-      const countryName = countryCodeToName(artifact.country_code);
-      hints.push(`Country: ${countryFlag(artifact.country_code)} ${countryName}`);
+      const code = artifact.country_code.trim().toUpperCase();
+      if (/^[A-Z]{2}$/.test(code)) {
+        hints.push({
+          kind: "country",
+          key: "country",
+          code,
+          name: countryCodeToName(code),
+        });
+      }
     }
-    if (artifact.era) hints.push(`Era: ${artifact.era}`);
-    if (artifact.museum_name) hints.push(`Museum: ${artifact.museum_name}`);
+    if (artifact.era) hints.push({ kind: "text", key: `era:${artifact.era}`, text: `Era: ${artifact.era}` });
+    if (artifact.museum_name) {
+      hints.push({
+        kind: "text",
+        key: `museum:${artifact.museum_name}`,
+        text: `Museum: ${artifact.museum_name}`,
+      });
+    }
     const revealCount = Math.min(hints.length, Math.floor(elapsedSeconds / 10) + 1);
     return hints.slice(0, revealCount);
   }, [artifact, elapsedSeconds]);
@@ -322,18 +333,52 @@ export default function PlaySection() {
       </Group>
 
       <Box style={{ flex: 1, minHeight: 0, position: "relative" }}>
-        {!answered && !isMobile ? (
-          <FactBubbles facts={artifact?.fun_facts ?? []} visibleCount={visibleFactCount} />
+        {!answered && !isMobile && (artifact?.fun_facts?.length ?? 0) > 0 ? (
+          <FactBubbles
+            facts={artifact?.fun_facts ?? []}
+            visibleCount={visibleFactCount}
+            topPercentRange={[20, 46]}
+            leftPercentRange={[10, 90]}
+          />
         ) : null}
 
         <Stack style={{ height: "100%", justifyContent: "space-between" }} gap="md" mb={"xl"}>
           <Stack gap="sm" style={{ minHeight: 0 }}>
             <Group gap="xs" wrap="wrap">
-              {timedImageHints.map((hint) => (
-                <Badge key={hint} size="lg" color="orange" variant="light">
-                  {hint}
-                </Badge>
-              ))}
+              {timedImageHints.map((hint) => {
+                if (hint.kind === "country") {
+                  const flagUrl = countryCodeToFlagUrl(hint.code);
+                  return (
+                    <Badge
+                      key={hint.key}
+                      size="lg"
+                      color="orange"
+                      variant="light"
+                      styles={{
+                        label: { display: "inline-flex", alignItems: "center", gap: 6 },
+                      }}
+                    >
+                      Country:
+                      {flagUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- remote flagcdn; matches collection
+                        <img
+                          src={flagUrl}
+                          alt=""
+                          width={20}
+                          height={15}
+                          style={{ display: "block", objectFit: "cover", borderRadius: 2 }}
+                        />
+                      ) : null}
+                      {hint.name}
+                    </Badge>
+                  );
+                }
+                return (
+                  <Badge key={hint.key} size="lg" color="orange" variant="light">
+                    {hint.text}
+                  </Badge>
+                );
+              })}
             </Group>
             <Text
               fw={700}

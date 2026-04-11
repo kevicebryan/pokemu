@@ -24,7 +24,7 @@ import { IconPlayerPause, IconPlayerPlay, IconSearch } from "@tabler/icons-react
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 import type { CollectionArtifact } from "@/lib/types/collection";
-import { countryCodeToName } from "@/util/country";
+import { countryCodeToFlagUrl, countryCodeToName } from "@/util/country";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchUserCollection } from "@/redux/slices/collectionSlice";
 import { fetchProfileByUserId } from "@/redux/slices/profileSlice";
@@ -34,12 +34,6 @@ function normalizeCountryCode(code?: string | null): string | null {
   if (!code) return null;
   const cc = code.trim().toUpperCase();
   return /^[A-Z]{2}$/.test(cc) ? cc : null;
-}
-
-function countryCodeToFlagUrl(code?: string): string | null {
-  const cc = normalizeCountryCode(code);
-  if (!cc) return null;
-  return `https://flagcdn.com/w20/${cc.toLowerCase()}.png`;
 }
 
 function sanitizeHttpsUrl(raw: string | undefined): string | null {
