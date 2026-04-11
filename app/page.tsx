@@ -23,6 +23,7 @@ import Image from "next/image";
 import DialogueOverlay from "@/components/sections/onboarding/DialogueOverlay";
 import {
   HOME_BACKSTORY_LINES,
+  HOME_BACKSTORY_LINES_KEY,
   HOME_BGM_SRC,
   POKEMU_BACKSTORY_SHOWN_KEY,
 } from "@/util/constant";
@@ -131,10 +132,10 @@ export default function Home() {
     <>
       <audio ref={homeMusicRef} src={HOME_BGM_SRC} preload="auto" loop hidden />
       <Center
+        bg={"mistral.6"}
         component="main"
         mih="100vh"
         p={24}
-        bg={SKY_BG}
         pos={"relative"}
         onPointerDownCapture={tryResumeMusicFromGesture}
         style={{
@@ -176,6 +177,7 @@ export default function Home() {
 
         {showBackstory ? (
           <DialogueOverlay
+            key={HOME_BACKSTORY_LINES_KEY}
             dialogues={HOME_BACKSTORY_LINES}
             onClose={closeBackstory}
             onStart={completeBackstory}

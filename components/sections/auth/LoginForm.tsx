@@ -99,7 +99,7 @@ export function LoginForm() {
   };
 
   return (
-    <Center component="section" mih="100vh" p={24} pos={"relative"} style={{ overflow: "hidden" }}>
+    <Center bg={"mistral.6"} component="section" mih="100vh" p={24} pos={"relative"} style={{ overflow: "hidden" }}>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

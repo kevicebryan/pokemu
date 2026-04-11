@@ -45,8 +45,31 @@ export const REWARD_VIDEO_SRC =
 /** Home page ambient loop (paused while backstory overlay is open). */
 export const HOME_BGM_SRC = "/audio/music.mp3";
 
-export const HOME_BACKSTORY_LINES = [
-  "YEAR 3000. DoomGPT deemed human culture 'inefficient'. Art, history, and color... all deleted in The Great Wipe.",
-  "Earth is now a grayscale void. But encrypted fragments of our past survived in the system ruins.",
-  "You are a Scavenger Ranger. Guess the artifacts. Restore the color. Join the resistance.",
+export type HomeBackstoryLine = {
+  text: string;
+  /** Optional illustration for this step (`/public/...`). */
+  imageUrl?: string;
+};
+
+export const HOME_BACKSTORY_LINES: HomeBackstoryLine[] = [
+  {
+    text:
+      "YEAR 3000. DoomGPT deemed human culture 'inefficient'. Art, history, and color... all deleted in The Great Wipe.",
+    imageUrl: "/images/story/story_1.png",
+  },
+  {
+    text:
+      "Earth is now a grayscale void. But encrypted fragments of our past survived in the system ruins.",
+    imageUrl: "/images/story/story_2.png",
+  },
+  {
+    text:
+      "You are a Scavenger Ranger. Guess the artifacts. Restore the color. Join the resistance.",
+    imageUrl: "/images/story/story_3.png",
+  },
 ];
+
+/** Stable key so `DialogueOverlay` can remount when copy or art changes (resets step). */
+export const HOME_BACKSTORY_LINES_KEY = HOME_BACKSTORY_LINES.map(
+  (l) => `${l.text}\u0001${l.imageUrl ?? ""}`,
+).join("\u0002");
