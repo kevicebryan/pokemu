@@ -8,13 +8,14 @@ import { setHearts } from "@/redux/slices/profileSlice";
 import { countryCodeToName } from "@/util/country";
 import { MAX_HEARTS } from "@/util/constant";
 import { useMediaQuery, useViewportSize } from "@mantine/hooks";
-import { Badge, Box, Button, Group, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Badge, Box, Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import { IconClockHour4 } from "@tabler/icons-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Confetti from "react-confetti";
 import FactBubbles from "./FactBubbles";
 import MosaicImage from "./MosaicImage";
+import OutOfLives from "./OutOfLives";
 import { RankCard } from "./RankCard";
 
 interface Artifact {
@@ -140,44 +141,22 @@ export default function PlaySection() {
     setRoundAttempts(0);
     setShowWrongAnswer(false);
 
-    const ownedIds: string[] = [];
-    if (userId) {
-      const { data: owned } = await supabase!.from("user_collections").select("artifact_id").eq("user_id", userId);
-      owned?.forEach((r) => ownedIds.push(r.artifact_id));
-    }
+    const { data, error } = await supabase!.rpc("get_random_unowned_artifact", {
+      p_user_id: userId ?? null,
+      p_country_code: countryCodeFilter ?? null,
+    });
 
-    let query = supabase!
-      .from("artifacts")
-      .select("id, name, era, region, country_code, museum_name, image_url, description, fun_facts, art_image_url")
-      .limit(50);
-
-    if (countryCodeFilter) {
-      query = query.eq("country_code", countryCodeFilter);
-    }
-
-    if (ownedIds.length > 0) {
-      query = query.not("id", "in", `(${ownedIds.join(",")})`);
-    }
-
-    const { data, error } = await query;
     if (error) {
       console.error(error);
       setLoading(false);
       return;
     }
 
-    if (!data || data.length === 0) {
-      setArtifact(null);
-      setLoading(false);
-      return;
-    }
-
-    const randomIndex = Math.floor(Math.random() * data.length);
-    const nextArtifact = data[randomIndex];
+    const nextArtifact = (data as Artifact[] | null)?.[0] ?? null;
     setArtifact(nextArtifact);
     setElapsedSeconds(0);
     setLoading(false);
-    setTimeout(() => inputRef.current?.focus(), 100);
+    if (nextArtifact) setTimeout(() => inputRef.current?.focus(), 100);
   }
 
   async function moveToNextRound() {
@@ -321,32 +300,7 @@ export default function PlaySection() {
   }, [artifact, elapsedSeconds]);
 
   if (hearts === 0) {
-    return (
-      <Box
-        style={{
-          height: "calc(100dvh - 64px - 32px)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 16,
-        }}
-      >
-        <Text size="64px" style={{ lineHeight: 1 }}>
-          💀
-        </Text>
-        <Title order={2}>Out of Lives</Title>
-        <Text c="dimmed" ta="center">
-          Check back again in <b style={{ color: "white" }}>{checkBackIn ?? "..."}</b>.
-        </Text>
-        <Button onClick={buyHearts} loading={buyHeartsLoading}>
-          Buy full lives (card)
-        </Button>
-        <Text size="xs" c="dimmed" ta="center" maw={320}>
-          Opens Stripe Checkout. You can also tap the hearts in the header when you&apos;re at 0 lives.
-        </Text>
-      </Box>
-    );
+    return <OutOfLives checkBackIn={checkBackIn} onBuyHearts={buyHearts} buyHeartsLoading={buyHeartsLoading} />;
   }
 
   return (

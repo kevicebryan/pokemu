@@ -2,7 +2,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 import { useAppSelector } from "@/redux/hooks";
-import { Box, Group, Loader, Stack, Text, Title } from "@mantine/core";
+import { Box, Group, Loader, Stack, Text } from "@mantine/core";
 import { useEffect, useState } from "react";
 
 type RankEntry = {
@@ -45,25 +45,35 @@ export function RankCard() {
     <Box
       p="md"
       style={{
-        border: "1px solid var(--mantine-color-default-border)",
-        borderRadius: "var(--mantine-radius-md)",
-        minWidth: 260,
+        background: "var(--mantine-color-default)",
+        border: "3px solid var(--mantine-color-mistral-6)",
+        boxShadow: "6px 6px 0 rgba(0,0,0,0.45)",
       }}
     >
-      <Title order={5} mb="sm">
+      <Text
+        fw={900}
+        mb="sm"
+        style={{
+          fontFamily: '"Handjet", "Courier New", monospace',
+          fontSize: 20,
+          letterSpacing: 1,
+          color: "var(--mantine-color-mistral-3)",
+          textTransform: "uppercase",
+        }}
+      >
         Speedrun Leaderboard
-      </Title>
+      </Text>
 
       {loading ? (
-        <Group justify="center" py="md">
-          <Loader size="sm" />
+        <Group justify="center" py="sm">
+          <Loader size="sm" color="mistral" />
         </Group>
       ) : top5.length === 0 ? (
-        <Text size="sm" c="dimmed">
+        <Text size="sm" c="dimmed" ff="monospace">
           No records yet.
         </Text>
       ) : (
-        <Stack gap={6}>
+        <Stack gap={4}>
           {top5.map((entry) => {
             const isCurrentUser = entry.user_id === userId;
             const i = entry.rank - 1;
@@ -72,23 +82,44 @@ export function RankCard() {
                 key={entry.user_id}
                 justify="space-between"
                 px={8}
-                py={4}
-                style={{
-                  borderRadius: "var(--mantine-radius-sm)",
-                  background: isCurrentUser
-                    ? "var(--mantine-color-blue-light)"
-                    : undefined,
-                }}
+                py={5}
+                style={
+                  isCurrentUser
+                    ? {
+                        background: "var(--mantine-color-mistral-6)",
+                        border: "2px solid var(--mantine-color-mistral-9)",
+                        boxShadow: "3px 3px 0 rgba(0,0,0,0.4)",
+                      }
+                    : {
+                        borderBottom: "1px solid var(--mantine-color-dark-5)",
+                      }
+                }
               >
-                <Group gap={8}>
-                  <Text size="sm" w={24} ta="center">
-                    {i < 3 ? MEDALS[i] : `${entry.rank}.`}
+                <Group gap={10}>
+                  <Text
+                    size="sm"
+                    ff="monospace"
+                    fw={700}
+                    w={28}
+                    ta="center"
+                    c={isCurrentUser ? "var(--mantine-color-mistral-1)" : "var(--mantine-color-mistral-4)"}
+                  >
+                    {i < 3 ? MEDALS[i] : `#${entry.rank}`}
                   </Text>
-                  <Text size="sm" fw={isCurrentUser ? 700 : 400}>
+                  <Text
+                    size="sm"
+                    ff="monospace"
+                    fw={isCurrentUser ? 700 : 400}
+                    c={isCurrentUser ? "var(--mantine-color-mistral-1)" : undefined}
+                  >
                     {entry.username}
                   </Text>
                 </Group>
-                <Text size="sm" ff="monospace" c="dimmed">
+                <Text
+                  size="sm"
+                  ff="monospace"
+                  c={isCurrentUser ? "var(--mantine-color-mistral-2)" : "dimmed"}
+                >
                   {formatTime(entry.avg_time)}
                 </Text>
               </Group>
@@ -98,13 +129,13 @@ export function RankCard() {
       )}
 
       {currentRank !== null && currentRank > 5 && (
-        <Text size="xs" c="dimmed" mt="xs">
+        <Text size="xs" ff="monospace" c="var(--mantine-color-mistral-4)" mt="xs">
           Your rank: #{currentRank}
         </Text>
       )}
 
-      <Text size="xs" c="dimmed" mt="sm">
-        Ranked by avg. time per artifact
+      <Text size="xs" ff="monospace" c="dimmed" mt="sm" style={{ opacity: 0.5 }}>
+        avg. time per artifact
       </Text>
     </Box>
   );
