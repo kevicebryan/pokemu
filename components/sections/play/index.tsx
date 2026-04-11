@@ -15,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Confetti from "react-confetti";
 import FactBubbles from "./FactBubbles";
 import MosaicImage from "./MosaicImage";
+import { RankCard } from "./RankCard";
 
 interface Artifact {
   id: string;
@@ -484,6 +485,7 @@ export default function PlaySection() {
                     : "Wrong! Revealing answer in 3 seconds..."}
               </Text>
             ) : null}
+            {round === "correct" ? <RankCard /> : null}
           </Stack>
         </Stack>
       </Box>
