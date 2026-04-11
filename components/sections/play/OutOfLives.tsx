@@ -4,11 +4,11 @@ import { Box, Button, Text, Title } from "@mantine/core";
 
 interface OutOfLivesProps {
   checkBackIn: string | null;
-  onBuyHearts: () => void;
-  buyHeartsLoading: boolean;
+  /** Opens the out-of-hearts modal (video reward + Stripe). */
+  onGetLivesBack: () => void;
 }
 
-export default function OutOfLives({ checkBackIn, onBuyHearts, buyHeartsLoading }: OutOfLivesProps) {
+export default function OutOfLives({ checkBackIn, onGetLivesBack }: OutOfLivesProps) {
   return (
     <Box
       style={{
@@ -27,11 +27,10 @@ export default function OutOfLives({ checkBackIn, onBuyHearts, buyHeartsLoading 
       <Text c="dimmed" ta="center">
         Check back again in <b style={{ color: "white" }}>{checkBackIn ?? "..."}</b>.
       </Text>
-      <Button onClick={onBuyHearts} loading={buyHeartsLoading}>
-        Buy full lives (card)
-      </Button>
+      <Button onClick={onGetLivesBack}>Get lives back</Button>
       <Text size="xs" c="dimmed" ta="center" maw={320}>
-        Opens Stripe Checkout. You can also tap the hearts in the header when you&apos;re at 0 lives.
+        Watch a short video for 1 life (once per 24h) or buy a full refill with Stripe. You can also
+        tap the hearts in the header.
       </Text>
     </Box>
   );
