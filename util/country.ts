@@ -22,3 +22,10 @@ export function formatCountryLabel(countryCode: string): string {
   const name = countryCodeToName(code);
   return `${flag ? `${flag} ` : ""}${name} (${code})`;
 }
+
+/** Flag + common name only (no ISO code). */
+export function countryFlagAndName(countryCode: string): string {
+  const flag = countryCodeToFlagEmoji(countryCode);
+  const name = countryCodeToName(countryCode);
+  return flag ? `${flag} ${name}` : name;
+}

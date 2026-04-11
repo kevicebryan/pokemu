@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AppShell, Box, Overlay, useMantineTheme } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
@@ -12,6 +12,8 @@ import { clearProfile } from "@/redux/slices/profileSlice";
 import { MAX_HEARTS } from "@/util/constant";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardNavbar } from "./DashboardNavbar";
+import { OutOfHeartsModal } from "./OutOfHeartsModal";
+import { OutOfHeartsModalProvider } from "./OutOfHeartsModalContext";
 import { StripeCheckoutReturn } from "./StripeCheckoutReturn";
 
 type DashboardShellProps = {
@@ -35,6 +37,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
   );
 
   const { startCheckout: buyHearts, loading: buyHeartsLoading } = useBuyHearts();
+  const [outOfHeartsOpen, setOutOfHeartsOpen] = useState(false);
+  const openOutOfHeartsModal = useCallback(() => setOutOfHeartsOpen(true), []);
+  const lastHeartReset = profile?.last_heart_reset ?? null;
 
   useEffect(() => {
     if (initialized && !isAuthenticated) {
@@ -66,41 +71,49 @@ export function DashboardShell({ children }: DashboardShellProps) {
   }
 
   return (
-    <AppShell
-      padding="md"
-      header={{ height: 64 }}
-      navbar={{
-        width: 200,
-        breakpoint: "sm",
-        collapsed: { mobile: !mobileNavOpened },
-      }}
-      styles={{ main: { background: "var(--pokemu-bg)" } }}
-    >
-      <Suspense fallback={null}>
-        <StripeCheckoutReturn />
-      </Suspense>
-      <DashboardHeader
-        heartsLeft={heartsLeft}
-        mobileNavOpened={mobileNavOpened}
-        onToggleMobileNav={toggleMobileNav}
-        onBuyHearts={buyHearts}
-        buyHeartsLoading={buyHeartsLoading}
-      />
-      <DashboardNavbar pathname={pathname} onLogout={handleLogout} />
-
-      {mobileNavOpened ? (
-        <Overlay
-          hiddenFrom="sm"
-          fixed
-          zIndex="var(--mantine-z-index-app)"
-          backgroundOpacity={0.35}
-          onClick={closeMobileNav}
+    <OutOfHeartsModalProvider open={openOutOfHeartsModal}>
+      <AppShell
+        padding="md"
+        header={{ height: 64 }}
+        navbar={{
+          width: 200,
+          breakpoint: "sm",
+          collapsed: { mobile: !mobileNavOpened },
+        }}
+        styles={{ main: { background: "var(--pokemu-bg)" } }}
+      >
+        <Suspense fallback={null}>
+          <StripeCheckoutReturn />
+        </Suspense>
+        <OutOfHeartsModal
+          opened={outOfHeartsOpen}
+          onClose={() => setOutOfHeartsOpen(false)}
+          lastHeartReset={lastHeartReset}
+          onBuyHearts={buyHearts}
+          buyHeartsLoading={buyHeartsLoading}
         />
-      ) : null}
+        <DashboardHeader
+          heartsLeft={heartsLeft}
+          mobileNavOpened={mobileNavOpened}
+          onToggleMobileNav={toggleMobileNav}
+          onOpenOutOfHearts={openOutOfHeartsModal}
+        />
+        <DashboardNavbar pathname={pathname} onLogout={handleLogout} />
 
-      <AppShell.Main>
-        <Box p="md">{children}</Box>
-      </AppShell.Main>
-    </AppShell>
+        {mobileNavOpened ? (
+          <Overlay
+            hiddenFrom="sm"
+            fixed
+            zIndex="var(--mantine-z-index-app)"
+            backgroundOpacity={0.35}
+            onClick={closeMobileNav}
+          />
+        ) : null}
+
+        <AppShell.Main>
+          <Box p="md">{children}</Box>
+        </AppShell.Main>
+      </AppShell>
+    </OutOfHeartsModalProvider>
   );
 }

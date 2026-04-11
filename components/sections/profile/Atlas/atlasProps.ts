@@ -8,4 +8,8 @@ export type AsciiAtlasProps = {
    * Key is ISO2 country code (e.g. "US"), value is artifact name(s).
    */
   artifactsByCountryCode?: Record<string, string | string[]>;
+  /**
+   * Optional map link per country (e.g. museum map URL from Supabase). Clicking the marker opens this.
+   */
+  mapUrlByCountryCode?: Record<string, string>;
 };

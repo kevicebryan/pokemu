@@ -18,6 +18,7 @@ export default function AsciiAtlas({
   filledCountryCodes = [],
   availableCountryCodes = [],
   artifactsByCountryCode,
+  mapUrlByCountryCode,
 }: AsciiAtlasProps) {
   return (
     <Box
@@ -34,6 +35,7 @@ export default function AsciiAtlas({
         filledCountryCodes={filledCountryCodes}
         availableCountryCodes={availableCountryCodes}
         artifactsByCountryCode={artifactsByCountryCode}
+        mapUrlByCountryCode={mapUrlByCountryCode}
       />
     </Box>
   );

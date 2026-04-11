@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { supabase } from "@/lib/supabase/client";
 import { HEART_REFILL_INTERVAL_MS, MAX_HEARTS } from "@/util/constant";
 
@@ -18,6 +18,7 @@ type ProfileState = {
   unlockedCountryCodes: string[];
   availableCountryCodes: string[];
   artifactsByCountryCode: Record<string, string[]>;
+  mapUrlByCountryCode: Record<string, string>;
   unlockedRegions: string[];
   availableRegions: string[];
   status: "idle" | "loading" | "succeeded" | "failed";
@@ -30,6 +31,7 @@ const initialState: ProfileState = {
   unlockedCountryCodes: [],
   availableCountryCodes: [],
   artifactsByCountryCode: {},
+  mapUrlByCountryCode: {},
   unlockedRegions: [],
   availableRegions: [],
   status: "idle",
@@ -39,6 +41,7 @@ const initialState: ProfileState = {
 type ArtifactGeoRow = {
   country_code: string | null;
   region: string | null;
+  map_url?: string | null;
 } & Record<string, unknown>;
 
 type UserCollectionArtifactRow = {
@@ -51,6 +54,7 @@ type ProfileFetchResult = {
   unlockedCountryCodes: string[];
   availableCountryCodes: string[];
   artifactsByCountryCode: Record<string, string[]>;
+  mapUrlByCountryCode: Record<string, string>;
   unlockedRegions: string[];
   availableRegions: string[];
 };
@@ -120,6 +124,7 @@ export const fetchProfileByUserId = createAsyncThunk(
     const availableCountries = new Set<string>();
     const availableRegions = new Set<string>();
     const artifactsByCountryCode = new Map<string, Set<string>>();
+    const mapUrlByCountryCode = new Map<string, string>();
     const unlockedCountries = new Set<string>();
     const unlockedRegions = new Set<string>();
 
@@ -133,6 +138,12 @@ export const fetchProfileByUserId = createAsyncThunk(
       if (countryCode) availableCountries.add(countryCode);
       if (region) availableRegions.add(region);
       if (countryCode) {
+        if (!mapUrlByCountryCode.has(countryCode)) {
+          const rawUrl = artifact.map_url;
+          if (typeof rawUrl === "string" && rawUrl.trim().length > 0) {
+            mapUrlByCountryCode.set(countryCode, rawUrl.trim());
+          }
+        }
         const artifactName = pickArtifactName(artifact);
         if (artifactName) {
           if (!artifactsByCountryCode.has(countryCode)) {
@@ -190,6 +201,11 @@ export const fetchProfileByUserId = createAsyncThunk(
           Array.from(names).sort(),
         ]),
       ),
+      mapUrlByCountryCode: Object.fromEntries(
+        Array.from(mapUrlByCountryCode.entries()).sort(([a], [b]) =>
+          a.localeCompare(b),
+        ),
+      ),
       unlockedRegions: Array.from(unlockedRegions).sort(),
       availableRegions: Array.from(availableRegions).sort(),
     };
@@ -237,13 +253,42 @@ const profileSlice = createSlice({
       state.unlockedCountryCodes = [];
       state.availableCountryCodes = [];
       state.artifactsByCountryCode = {};
+      state.mapUrlByCountryCode = {};
       state.unlockedRegions = [];
       state.availableRegions = [];
       state.status = "idle";
       state.error = null;
     },
-    setHearts: (state, action: { payload: number }) => {
-      if (state.profile) state.profile.hearts = action.payload;
+    /**
+     * Updates heart count after play. If the profile row isn’t in Redux yet (fetch still in flight),
+     * pass `{ hearts, userId }` so we can stash a minimal profile — otherwise `setHearts(n)` is a no-op
+     * while `profile` is null and the UI stays stuck at the default max.
+     */
+    setHearts: (
+      state,
+      action: PayloadAction<number | { hearts: number; userId: string }>,
+    ) => {
+      const hearts =
+        typeof action.payload === "number"
+          ? action.payload
+          : action.payload.hearts;
+      const userId =
+        typeof action.payload === "number" ? undefined : action.payload.userId;
+
+      if (state.profile) {
+        state.profile.hearts = hearts;
+        return;
+      }
+      if (userId) {
+        state.profile = {
+          id: userId,
+          username: "",
+          hearts,
+          last_heart_reset: null,
+          total_items_restored: 0,
+          updated_at: null,
+        };
+      }
     },
   },
   extraReducers: (builder) => {
@@ -263,6 +308,7 @@ const profileSlice = createSlice({
           action.payload.availableCountryCodes,
         );
         state.artifactsByCountryCode = action.payload.artifactsByCountryCode ?? {};
+        state.mapUrlByCountryCode = action.payload.mapUrlByCountryCode ?? {};
         state.unlockedRegions = asSortedStringArray(action.payload.unlockedRegions);
         state.availableRegions = asSortedStringArray(
           action.payload.availableRegions,

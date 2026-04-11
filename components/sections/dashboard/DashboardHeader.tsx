@@ -2,9 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ActionIcon, Anchor, AppShell, Burger, Group, Image, Text, UnstyledButton } from "@mantine/core";
-import { IconHeart, IconHeartFilled, IconMusic, IconMusicOff, IconVolume, IconVolumeOff } from "@tabler/icons-react";
-import { HOME_BGM_SRC, LOGO_IMAGE_URL, MAX_HEARTS } from "@/util/constant";
+import {
+  ActionIcon,
+  Anchor,
+  AppShell,
+  Burger,
+  Group,
+  Image,
+  Text,
+  Tooltip,
+  UnstyledButton,
+} from "@mantine/core";
+import { IconHeart, IconHeartFilled, IconMusic, IconMusicOff } from "@tabler/icons-react";
+import {
+  HEARTS_REFRESH_TOOLTIP,
+  HOME_BGM_SRC,
+  LOGO_IMAGE_URL,
+  MAX_HEARTS,
+} from "@/util/constant";
 
 function startDashboardBackgroundMusic(el: HTMLAudioElement) {
   el.loop = true;
@@ -25,16 +40,14 @@ type DashboardHeaderProps = {
   heartsLeft: number;
   mobileNavOpened: boolean;
   onToggleMobileNav: () => void;
-  onBuyHearts?: () => void;
-  buyHeartsLoading?: boolean;
+  onOpenOutOfHearts?: () => void;
 };
 
 export function DashboardHeader({
   heartsLeft,
   mobileNavOpened,
   onToggleMobileNav,
-  onBuyHearts,
-  buyHeartsLoading = false,
+  onOpenOutOfHearts,
 }: DashboardHeaderProps) {
   const [isMusicEnabled, setIsMusicEnabled] = useState(true);
   const dashboardMusicRef = useRef<HTMLAudioElement | null>(null);
@@ -109,47 +122,54 @@ export function DashboardHeader({
           <Text size="sm" c="dimmed" visibleFrom="xs">
             {heartsLeft}/{MAX_HEARTS}
           </Text>
-          {heartsLeft === 0 && onBuyHearts ? (
-            <UnstyledButton
-              type="button"
-              onClick={() => onBuyHearts()}
-              disabled={buyHeartsLoading}
-              title="Buy full lives (secure card checkout)"
-              aria-label="Buy full lives"
-              style={{ cursor: buyHeartsLoading ? "wait" : "pointer" }}
-            >
-              <Group gap={4} wrap="nowrap">
-                {Array.from({ length: MAX_HEARTS }, (_, index) => (
-                  <IconHeart
-                    key={index}
-                    size={22}
-                    color="var(--mantine-color-dimmed)"
-                    stroke={1.5}
-                  />
-                ))}
-              </Group>
-            </UnstyledButton>
+          {heartsLeft === 0 && onOpenOutOfHearts ? (
+            <Tooltip label={HEARTS_REFRESH_TOOLTIP} withArrow multiline maw={280}>
+              <span style={{ display: "inline-block" }}>
+                <UnstyledButton
+                  type="button"
+                  onClick={() => onOpenOutOfHearts()}
+                  title="Get lives back"
+                  aria-label="Out of lives — see options to refill"
+                  style={{ cursor: "pointer" }}
+                >
+                  <Group gap={4} wrap="nowrap">
+                    {Array.from({ length: MAX_HEARTS }, (_, index) => (
+                      <IconHeart
+                        key={index}
+                        size={22}
+                        color="var(--mantine-color-dimmed)"
+                        stroke={1.5}
+                      />
+                    ))}
+                  </Group>
+                </UnstyledButton>
+              </span>
+            </Tooltip>
           ) : (
-            <Group gap={4} wrap="nowrap">
-              {Array.from({ length: MAX_HEARTS }, (_, index) => {
-                const filled = index < heartsLeft;
-                return filled ? (
-                  <IconHeartFilled
-                    key={index}
-                    size={22}
-                    color="var(--mantine-color-mistral-6)"
-                    stroke={1.5}
-                  />
-                ) : (
-                  <IconHeart
-                    key={index}
-                    size={22}
-                    color="var(--mantine-color-dimmed)"
-                    stroke={1.5}
-                  />
-                );
-              })}
-            </Group>
+            <Tooltip label={HEARTS_REFRESH_TOOLTIP} withArrow multiline maw={280}>
+              <span style={{ display: "inline-block", cursor: "default" }}>
+                <Group gap={4} wrap="nowrap">
+                  {Array.from({ length: MAX_HEARTS }, (_, index) => {
+                    const filled = index < heartsLeft;
+                    return filled ? (
+                      <IconHeartFilled
+                        key={index}
+                        size={22}
+                        color="var(--mantine-color-mistral-6)"
+                        stroke={1.5}
+                      />
+                    ) : (
+                      <IconHeart
+                        key={index}
+                        size={22}
+                        color="var(--mantine-color-dimmed)"
+                        stroke={1.5}
+                      />
+                    );
+                  })}
+                </Group>
+              </span>
+            </Tooltip>
           )}
         </Group>
       </Group>
