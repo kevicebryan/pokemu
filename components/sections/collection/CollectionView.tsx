@@ -54,13 +54,17 @@ function resolveMuseumMapsUrl(artifact: CollectionArtifact): string | null {
 }
 
 function dossierHeadingText(artifact: CollectionArtifact): string {
-  const museum = artifact.museumName?.trim();
+  const museum = artifact.museumName?.trim() ?? "";
   const country =
     artifact.countryName?.trim() ||
     (artifact.countryCode ? countryCodeToName(artifact.countryCode) : "") ||
     "";
-  const parts = [museum, country].filter(Boolean);
-  return parts.length ? parts.join(" · ") : "Dossier";
+  if (museum && country) {
+    return `${museum} | originally from ${country}`;
+  }
+  if (museum) return museum;
+  if (country) return `originally from ${country}`;
+  return "Dossier";
 }
 
 function DossierPanelHeading({ artifact }: { artifact: CollectionArtifact }) {
