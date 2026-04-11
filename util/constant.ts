@@ -53,19 +53,19 @@ export type HomeBackstoryLine = {
 
 export const HOME_BACKSTORY_LINES: HomeBackstoryLine[] = [
   {
-    text:
-      "YEAR 3000. DoomGPT deemed human culture 'inefficient'. Art, history, and color... all deleted in The Great Wipe.",
-    imageUrl: "/images/story/story_1.png",
+    text: "YEAR 3000. DoomGPT deemed human culture 'inefficient'. Art, history, and color... all deleted in The Great Wipe.",
+    imageUrl:
+      "https://umobaabrcacefoogbodr.supabase.co/storage/v1/object/public/gift/gift_1done_final.gif",
   },
   {
-    text:
-      "Earth is now a grayscale void. But encrypted fragments of our past survived in the system ruins.",
-    imageUrl: "/images/story/story_2.png",
+    text: "Earth is now a grayscale void. But encrypted fragments of our past survived in the system ruins.",
+    imageUrl:
+      "https://umobaabrcacefoogbodr.supabase.co/storage/v1/object/public/gift/final.ai2_gift.gif",
   },
   {
-    text:
-      "You are a Scavenger Ranger. Guess the artifacts. Restore the color. Join the resistance.",
-    imageUrl: "/images/story/story_3.png",
+    text: "You are a Scavenger Ranger. Guess the artifacts. Restore the color. Join the resistance.",
+    imageUrl:
+      "https://umobaabrcacefoogbodr.supabase.co/storage/v1/object/public/gift/gift_ai_3final_reallyfinal.gif",
   },
 ];
 
