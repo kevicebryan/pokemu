@@ -54,6 +54,9 @@ const ProfileSection = () => {
   const artifactsByCountryCode = useAppSelector(
     (state) => state.profile.artifactsByCountryCode,
   );
+  const mapUrlByCountryCode = useAppSelector(
+    (state) => state.profile.mapUrlByCountryCode,
+  );
   const profileStatus = useAppSelector((state) => state.profile.status);
   const collectedArtifactCount = useAppSelector(
     (state) => state.profile.collectedArtifactCount,
@@ -162,6 +165,7 @@ const ProfileSection = () => {
             filledCountryCodes={unlockedCountryCodes}
             availableCountryCodes={availableCountryCodes}
             artifactsByCountryCode={artifactsByCountryCode}
+            mapUrlByCountryCode={mapUrlByCountryCode}
           />
         </Stack>
       ) : null}
