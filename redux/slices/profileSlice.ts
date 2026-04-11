@@ -9,6 +9,8 @@ type ProfileRecord = {
   last_heart_reset: string | null;
   total_items_restored: number;
   updated_at: string | null;
+  /** Empty string = classic on disk; `null` = column unset (use local fallback). */
+  room_bg: string | null;
 };
 
 type ProfileState = {
@@ -98,7 +100,7 @@ export const fetchProfileByUserId = createAsyncThunk(
         supabase
           .from("profiles")
           .select(
-            "id, username, hearts, last_heart_reset, total_items_restored, updated_at",
+            "id, username, hearts, last_heart_reset, total_items_restored, updated_at, room_bg",
           )
           .eq("id", userId)
           .maybeSingle(),
@@ -178,7 +180,7 @@ export const fetchProfileByUserId = createAsyncThunk(
             .update({ hearts: MAX_HEARTS, last_heart_reset: nowIso })
             .eq("id", userId)
             .select(
-              "id, username, hearts, last_heart_reset, total_items_restored, updated_at",
+              "id, username, hearts, last_heart_reset, total_items_restored, updated_at, room_bg",
             )
             .maybeSingle();
 
@@ -221,17 +223,24 @@ export const upsertProfile = createAsyncThunk(
       id: string;
       username: string;
     },
-    { rejectWithValue },
+    { rejectWithValue, getState },
   ) => {
     if (!supabase) {
       return rejectWithValue("Supabase client is not configured.");
     }
 
+    const p = (getState() as { profile: ProfileState }).profile.profile;
+    const upsertRow = {
+      id: payload.id,
+      username: payload.username,
+      ...(p?.id === payload.id ? { room_bg: p.room_bg } : {}),
+    };
+
     const { data, error } = await supabase
       .from("profiles")
-      .upsert(payload, { onConflict: "id" })
+      .upsert(upsertRow, { onConflict: "id" })
       .select(
-        "id, username, hearts, last_heart_reset, total_items_restored, updated_at",
+        "id, username, hearts, last_heart_reset, total_items_restored, updated_at, room_bg",
       )
       .single();
 
@@ -287,7 +296,16 @@ const profileSlice = createSlice({
           last_heart_reset: null,
           total_items_restored: 0,
           updated_at: null,
+          room_bg: null,
         };
+      }
+    },
+    /** After saving `room_bg` to Supabase; keeps Redux aligned without a refetch. */
+    patchProfileRoomBg: (state, action: PayloadAction<string | null>) => {
+      if (state.profile) {
+        const v = action.payload;
+        state.profile.room_bg =
+          v == null ? null : typeof v === "string" ? v : null;
       }
     },
   },
@@ -333,5 +351,6 @@ const profileSlice = createSlice({
   },
 });
 
-export const { clearProfile, setHearts } = profileSlice.actions;
+export const { clearProfile, setHearts, patchProfileRoomBg } =
+  profileSlice.actions;
 export const profileReducer = profileSlice.reducer;

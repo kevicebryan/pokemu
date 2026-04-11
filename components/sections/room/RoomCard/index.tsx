@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Box, Card, Group, Image, Stack, Text } from "@mantine/core";
-import { IconChevronRight, IconUser } from "@tabler/icons-react";
-import { ROOM_BG_TEXTURE_URL } from "@/util/constant";
+import { Box, Card, Image, Stack, Text } from "@mantine/core";
+import { IconChevronRight } from "@tabler/icons-react";
+import {
+  resolveEffectiveRoomBgSlug,
+  roomBgSlugToUrl,
+} from "@/lib/roomBackground";
 import type { OtherRoomOwner } from "@/lib/roomDecorations";
 
 type RoomCardProps = {
@@ -18,6 +21,10 @@ const RoomCard = ({ owner }: RoomCardProps) => {
 
   const artifactLabel =
     owner.decorationCount === 1 ? "1 artifact" : `${owner.decorationCount} artifacts`;
+
+  const previewWallpaperUrl = roomBgSlugToUrl(
+    resolveEffectiveRoomBgSlug(owner.room_bg, null),
+  );
 
   return (
     <Card
@@ -48,11 +55,10 @@ const RoomCard = ({ owner }: RoomCardProps) => {
             aspectRatio: "1 / 1",
             border: "4px solid var(--mantine-color-mistral-6)",
             backgroundColor: "var(--mantine-color-dark-7)",
-            backgroundImage: `url(${ROOM_BG_TEXTURE_URL})`,
-            backgroundSize: "48px",
-            backgroundRepeat: "repeat",
-            backgroundPosition: "top left",
-            imageRendering: "pixelated",
+            backgroundImage: `url(${previewWallpaperUrl})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
             overflow: "hidden",
             borderRadius: 4,
           }}
@@ -79,12 +85,9 @@ const RoomCard = ({ owner }: RoomCardProps) => {
           <Text size="xs" c="dimmed" tt="uppercase" fw={600}>
             Ranger
           </Text>
-          <Group gap={6} wrap="nowrap" align="flex-start">
-            <IconUser size={16} style={{ flexShrink: 0 }} aria-hidden />
-            <Text size="sm" fw={700} lineClamp={2} style={{ flex: 1, minWidth: 0 }}>
-              {displayName}
-            </Text>
-          </Group>
+          <Text size="sm" fw={700} lineClamp={2}>
+            {displayName}
+          </Text>
           {!hasUsername ? (
             <Text size="xs" c="dimmed">
               Set a username in Profile to show your name here.

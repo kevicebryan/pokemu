@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Anchor, Stack, Text } from "@mantine/core";
+import { Anchor, Box, Group, Stack, Text } from "@mantine/core";
 import RoomBox from "@/components/sections/room/RoomBox";
+import { IconArrowLeft } from "@tabler/icons-react";
 
 const UserRoomPage = () => {
   const params = useParams();
@@ -22,9 +23,14 @@ const UserRoomPage = () => {
   return (
     <Stack gap="md">
       <Anchor component={Link} href="/dashboard/room" size="sm" w="fit-content">
-        ← Back to room
+        <Group gap="xs">
+          <IconArrowLeft />
+          <Text size="lg">Back to room</Text>
+        </Group>
       </Anchor>
-      <RoomBox roomOwnerUserId={id} fullWidth />
+      <Box w={"75%"}>
+        <RoomBox roomOwnerUserId={id} fullWidth />
+      </Box>
     </Stack>
   );
 };

@@ -22,7 +22,7 @@ import {
   addRoomDecoration,
   clampDecorationCenterPct,
   fetchRoomDecorations,
-  fetchRoomOwnerUsername,
+  fetchRoomOwnerProfileSnippet,
   ROOM_DECORATION_TILE_HALF_PCT,
   ROOM_DECORATION_TILE_PCT,
   type RoomDecoration,
@@ -32,11 +32,15 @@ import {
   clearRoomBgSlug,
   isRoomBgStyleSlug,
   readRoomBgSlug,
+  resolveEffectiveRoomBgSlug,
   ROOM_BG_STYLE_SLUGS,
+  roomBgSlugToDbValue,
   roomBgSlugToUrl,
+  syncRoomBgToDatabase,
   writeRoomBgSlug,
 } from "@/lib/roomBackground";
-import { useAppSelector } from "@/redux/hooks";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { patchProfileRoomBg } from "@/redux/slices/profileSlice";
 import { POKEMU_ROOM_BG_STORAGE_KEY, ROOM_BG_IMAGE_URL } from "@/util/constant";
 
 type RoomBgChoice = {
@@ -90,10 +94,14 @@ export default function RoomBox({
   roomOwnerUserId,
   fullWidth = false,
 }: RoomBoxProps) {
+  const dispatch = useAppDispatch();
   const currentUserId = useAppSelector((s) => s.auth.user?.id ?? null);
+  const profile = useAppSelector((s) => s.profile.profile);
+  const profileStatus = useAppSelector((s) => s.profile.status);
   const canEdit = Boolean(
     currentUserId && roomOwnerUserId && currentUserId === roomOwnerUserId,
   );
+  const roomBgTouchedRef = useRef(false);
 
   const { items, unlockedIds } = useAppSelector((s) => s.collection);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -105,6 +113,7 @@ export default function RoomBox({
   const [addOpen, { open: openAdd, close: closeAdd }] = useDisclosure(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [layoutDirty, setLayoutDirty] = useState(false);
+  const [roomStyleDirty, setRoomStyleDirty] = useState(false);
   const [savingLayout, setSavingLayout] = useState(false);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [roomOwnerName, setRoomOwnerName] = useState<string | null>(null);
@@ -135,9 +144,9 @@ export default function RoomBox({
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const [{ data, error }, { data: ownerName }] = await Promise.all([
+      const [{ data, error }, { data: ownerSnippet }] = await Promise.all([
         fetchRoomDecorations(roomOwnerUserId),
-        fetchRoomOwnerUsername(roomOwnerUserId),
+        fetchRoomOwnerProfileSnippet(roomOwnerUserId),
       ]);
       if (cancelled) return;
       if (error) {
@@ -147,14 +156,27 @@ export default function RoomBox({
         setLoadError(null);
         setDecorations(data);
       }
-      setRoomOwnerName(ownerName);
+      setRoomOwnerName(ownerSnippet.username);
       setLayoutDirty(false);
       setLoading(false);
+      if (currentUserId !== roomOwnerUserId) {
+        const slug = resolveEffectiveRoomBgSlug(ownerSnippet.room_bg, null);
+        setRoomSurfaceBg({ url: roomBgSlugToUrl(slug), slug });
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [roomOwnerUserId]);
+  }, [roomOwnerUserId, currentUserId]);
+
+  useEffect(() => {
+    if (!canEdit || roomBgTouchedRef.current) return;
+    if (profileStatus !== "succeeded" || !profile || profile.id !== roomOwnerUserId) {
+      return;
+    }
+    const slug = resolveEffectiveRoomBgSlug(profile.room_bg, readRoomBgSlug());
+    setRoomSurfaceBg({ url: roomBgSlugToUrl(slug), slug });
+  }, [canEdit, profileStatus, profile?.id, profile?.room_bg, roomOwnerUserId]);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -170,6 +192,8 @@ export default function RoomBox({
   }, []);
 
   const selectRoomBg = (slug: string | null) => {
+    roomBgTouchedRef.current = true;
+    setRoomStyleDirty(true);
     if (slug == null) {
       clearRoomBgSlug();
       setRoomSurfaceBg({ url: ROOM_BG_IMAGE_URL, slug: null });
@@ -209,30 +233,68 @@ export default function RoomBox({
   };
 
   const handleSaveLayout = async () => {
-    if (!canEdit || !layoutDirty) return;
+    if (!canEdit || (!layoutDirty && !roomStyleDirty)) return;
+    const hadLayoutChanges = layoutDirty;
+    const hadStyleChanges = roomStyleDirty;
     setSavingLayout(true);
-    const { error } = await syncRoomDecorationsToDatabase(
-      roomOwnerUserId,
-      decorations.map((d) => ({
-        id: d.id,
-        pos_left_pct: d.pos_left_pct,
-        pos_top_pct: d.pos_top_pct,
-      })),
-    );
-    setSavingLayout(false);
-    if (error) {
-      notifications.show({
-        title: "Could not save room",
-        message: error,
-        color: "red",
-      });
-      void reload();
-      return;
+    if (layoutDirty) {
+      const { error } = await syncRoomDecorationsToDatabase(
+        roomOwnerUserId,
+        decorations.map((d) => ({
+          id: d.id,
+          pos_left_pct: d.pos_left_pct,
+          pos_top_pct: d.pos_top_pct,
+        })),
+      );
+      if (error) {
+        setSavingLayout(false);
+        notifications.show({
+          title: "Could not save room",
+          message: error,
+          color: "red",
+        });
+        void reload();
+        return;
+      }
     }
+    if (roomStyleDirty) {
+      const { error } = await syncRoomBgToDatabase(
+        roomOwnerUserId,
+        roomSurfaceBg.slug,
+      );
+      if (error) {
+        setSavingLayout(false);
+        notifications.show({
+          title: "Could not save room style",
+          message: error,
+          color: "red",
+        });
+        void reload();
+        return;
+      }
+      const dbVal = roomBgSlugToDbValue(roomSurfaceBg.slug);
+      dispatch(patchProfileRoomBg(dbVal));
+      if (roomSurfaceBg.slug == null) {
+        clearRoomBgSlug();
+      } else {
+        writeRoomBgSlug(roomSurfaceBg.slug);
+      }
+    }
+    setSavingLayout(false);
     setLayoutDirty(false);
+    setRoomStyleDirty(false);
+    if (hadStyleChanges) {
+      roomBgTouchedRef.current = false;
+    }
+    let saveMessage = "Your layout is saved.";
+    if (hadLayoutChanges && hadStyleChanges) {
+      saveMessage = "Your layout and room style are saved.";
+    } else if (hadStyleChanges) {
+      saveMessage = "Your room style is saved.";
+    }
     notifications.show({
       title: "Room saved",
-      message: "Your layout is saved.",
+      message: saveMessage,
       color: "mistral",
     });
     void reload();
@@ -319,15 +381,20 @@ export default function RoomBox({
               size="sm"
               variant="filled"
               color="mistral"
-              disabled={!layoutDirty || savingLayout}
+              disabled={(!layoutDirty && !roomStyleDirty) || savingLayout}
               loading={savingLayout}
             >
               Save layout
             </Button>
           </Group>
-          {layoutDirty ? (
+          {layoutDirty || roomStyleDirty ? (
             <Text size="xs" c="dimmed">
-              You have unsaved changes — click Save layout to persist positions.
+              You have unsaved changes — click Save layout to persist
+              {layoutDirty && roomStyleDirty
+                ? " positions and room style."
+                : layoutDirty
+                  ? " positions."
+                  : " room style."}
             </Text>
           ) : null}
         </Stack>

@@ -1,10 +1,13 @@
 export const PARALLAX_IMAGE_URL = "/images/placeholder.png";
 export const LOGO_IMAGE_URL = "/pokemu.png";
 export const ROOM_BG_TEXTURE_URL = "/images/tile.png";
-/** Default room wallpaper when no style is picked (see `pokemu_room_bg` in localStorage). */
+/** Default room wallpaper when no style is picked (see `profiles.room_bg` and `pokemu_room_bg`). */
 export const ROOM_BG_IMAGE_URL = "/images/room_bg.png";
 
-/** `localStorage` value = filename without `.png` under `/images/rooms_bg/`, or unset for {@link ROOM_BG_IMAGE_URL}. */
+/**
+ * `localStorage` fallback when `profiles.room_bg` is unset: filename stem under `/images/rooms_bg/`,
+ * or unset for {@link ROOM_BG_IMAGE_URL}.
+ */
 export const POKEMU_ROOM_BG_STORAGE_KEY = "pokemu_room_bg";
 
 /** Max lives / hearts shown in the dashboard header */

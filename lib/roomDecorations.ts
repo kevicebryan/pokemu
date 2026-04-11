@@ -138,33 +138,55 @@ export async function fetchRoomDecorations(
 export type OtherRoomOwner = {
   userId: string;
   username: string | null;
+  /** `profiles.room_bg` — drives card preview wallpaper (same rules as the full room view). */
+  room_bg: string | null;
   decorationCount: number;
   previewImageUrl: string | null;
 };
 
-export async function fetchRoomOwnerUsername(
+export type RoomOwnerProfileSnippet = {
+  username: string | null;
+  /** `profiles.room_bg`: unset / classic / style slug. */
+  room_bg: string | null;
+};
+
+export async function fetchRoomOwnerProfileSnippet(
   userId: string,
-): Promise<{ data: string | null; error: string | null }> {
+): Promise<{ data: RoomOwnerProfileSnippet; error: string | null }> {
   if (!supabase) {
-    return { data: null, error: "Supabase client is not configured." };
+    return {
+      data: { username: null, room_bg: null },
+      error: "Supabase client is not configured.",
+    };
   }
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("username")
+    .select("username, room_bg")
     .eq("id", userId)
     .maybeSingle();
 
   if (error) {
-    return { data: null, error: error.message };
+    return { data: { username: null, room_bg: null }, error: error.message };
   }
 
+  const row = data as { username?: string | null; room_bg?: string | null } | null;
   const username =
-    typeof (data as { username?: string | null } | null)?.username === "string"
-      ? (data as { username: string }).username.trim()
-      : "";
+    typeof row?.username === "string" ? row.username.trim() : "";
+  const room_bg: string | null =
+    row == null
+      ? null
+      : typeof row.room_bg === "string" || row.room_bg === null
+        ? row.room_bg
+        : null;
 
-  return { data: username || null, error: null };
+  return {
+    data: {
+      username: username || null,
+      room_bg,
+    },
+    error: null,
+  };
 }
 
 /**
@@ -225,7 +247,7 @@ export async function fetchOtherRoomOwners(
 
   const { data: profileRows, error: profileError } = await supabase
     .from("profiles")
-    .select("id, username")
+    .select("id, username, room_bg")
     .in("id", userIds);
 
   if (profileError) {
@@ -233,12 +255,18 @@ export async function fetchOtherRoomOwners(
   }
 
   const usernameById = new Map<string, string | null>();
+  const roomBgById = new Map<string, string | null>();
   for (const p of profileRows ?? []) {
     const id = typeof p.id === "string" ? p.id : "";
     if (!id) continue;
     usernameById.set(
       id,
       typeof p.username === "string" ? p.username : null,
+    );
+    const rawBg = (p as { room_bg?: string | null }).room_bg;
+    roomBgById.set(
+      id,
+      typeof rawBg === "string" || rawBg === null ? rawBg : null,
     );
   }
 
@@ -247,6 +275,7 @@ export async function fetchOtherRoomOwners(
     return {
       userId,
       username: usernameById.get(userId) ?? null,
+      room_bg: roomBgById.get(userId) ?? null,
       decorationCount: agg.count,
       previewImageUrl: agg.previewImageUrl,
     };

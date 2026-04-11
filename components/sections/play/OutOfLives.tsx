@@ -25,7 +25,7 @@ export default function OutOfLives({ checkBackIn, onGetLivesBack }: OutOfLivesPr
       </Text>
       <Title order={2}>Out of Lives</Title>
       <Text c="dimmed" ta="center">
-        Check back again in <b style={{ color: "white" }}>{checkBackIn ?? "..."}</b>.
+        Check back again in <strong style={{ color: "var(--mantine-color-mistral-6)" }}>{checkBackIn ?? "..."}</strong>.
       </Text>
       <Button onClick={onGetLivesBack}>Get lives back</Button>
       <Text size="xs" c="dimmed" ta="center" maw={320}>
