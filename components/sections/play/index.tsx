@@ -102,7 +102,7 @@ export default function PlaySection() {
   const inputRef = useRef<HTMLInputElement>(null);
   const correctAudioRef = useRef<HTMLAudioElement | null>(null);
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
-  const moveToNextRoundRef = useRef<() => Promise<void>>(async () => {});
+  const moveToNextRoundRef = useRef<() => Promise<void>>(async () => { });
   const { width, height } = useViewportSize();
   const isMobile = useMediaQuery("(max-width: 48em)");
   const { openOutOfHeartsModal } = useOutOfHeartsModal();
@@ -335,6 +335,7 @@ export default function PlaySection() {
       <Box style={{ flex: 1, minHeight: 0, position: "relative" }}>
         {!answered && !isMobile && (artifact?.fun_facts?.length ?? 0) > 0 ? (
           <FactBubbles
+            key={artifact?.id ?? "no-artifact"}
             facts={artifact?.fun_facts ?? []}
             visibleCount={visibleFactCount}
             topPercentRange={[20, 46]}
