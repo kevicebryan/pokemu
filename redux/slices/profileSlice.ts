@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import { supabase } from "@/lib/supabase/client";
 import { HEART_REFILL_INTERVAL_MS, MAX_HEARTS } from "@/util/constant";
 
@@ -259,8 +259,36 @@ const profileSlice = createSlice({
       state.status = "idle";
       state.error = null;
     },
-    setHearts: (state, action: { payload: number }) => {
-      if (state.profile) state.profile.hearts = action.payload;
+    /**
+     * Updates heart count after play. If the profile row isn’t in Redux yet (fetch still in flight),
+     * pass `{ hearts, userId }` so we can stash a minimal profile — otherwise `setHearts(n)` is a no-op
+     * while `profile` is null and the UI stays stuck at the default max.
+     */
+    setHearts: (
+      state,
+      action: PayloadAction<number | { hearts: number; userId: string }>,
+    ) => {
+      const hearts =
+        typeof action.payload === "number"
+          ? action.payload
+          : action.payload.hearts;
+      const userId =
+        typeof action.payload === "number" ? undefined : action.payload.userId;
+
+      if (state.profile) {
+        state.profile.hearts = hearts;
+        return;
+      }
+      if (userId) {
+        state.profile = {
+          id: userId,
+          username: "",
+          hearts,
+          last_heart_reset: null,
+          total_items_restored: 0,
+          updated_at: null,
+        };
+      }
     },
   },
   extraReducers: (builder) => {

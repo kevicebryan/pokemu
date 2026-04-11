@@ -1,10 +1,10 @@
 "use client";
 
 import { supabase } from "@/lib/supabase/client";
-import { useBuyHearts } from "@/hooks/useBuyHearts";
+import { useOutOfHeartsModal } from "@/components/sections/dashboard/OutOfHeartsModalContext";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { unlockArtifact, fetchUserCollection } from "@/redux/slices/collectionSlice";
-import { setHearts } from "@/redux/slices/profileSlice";
+import { fetchProfileByUserId, setHearts } from "@/redux/slices/profileSlice";
 import { countryCodeToName } from "@/util/country";
 import { MAX_HEARTS } from "@/util/constant";
 import { useMediaQuery, useViewportSize } from "@mantine/hooks";
@@ -104,7 +104,7 @@ export default function PlaySection() {
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null);
   const { width, height } = useViewportSize();
   const isMobile = useMediaQuery("(max-width: 48em)");
-  const { startCheckout: buyHearts, loading: buyHeartsLoading } = useBuyHearts();
+  const { openOutOfHeartsModal } = useOutOfHeartsModal();
 
   function playResultAudio(isCorrect: boolean) {
     const audio = isCorrect ? correctAudioRef.current : wrongAudioRef.current;
@@ -120,8 +120,17 @@ export default function PlaySection() {
     wrongAudioRef.current = new Audio("/audio/wrong.mp3");
   }, []);
 
+  useEffect(() => {
+    if (!userId) return;
+    void dispatch(fetchProfileByUserId(userId));
+  }, [dispatch, userId]);
+
   function applyHearts(next: number) {
-    dispatch(setHearts(next));
+    if (userId) {
+      dispatch(setHearts({ hearts: next, userId }));
+    } else {
+      dispatch(setHearts(next));
+    }
     if (!userId) return;
     const spentAHeart = next < hearts;
     const shouldStartTimer = spentAHeart && next < MAX_HEARTS && !lastHeartReset;
@@ -338,11 +347,12 @@ export default function PlaySection() {
         <Text c="dimmed" ta="center">
           Check back again in <b style={{ color: "white" }}>{checkBackIn ?? "..."}</b>.
         </Text>
-        <Button onClick={buyHearts} loading={buyHeartsLoading}>
-          Buy full lives (card)
+        <Button onClick={openOutOfHeartsModal}>
+          Get lives back
         </Button>
         <Text size="xs" c="dimmed" ta="center" maw={320}>
-          Opens Stripe Checkout. You can also tap the hearts in the header when you&apos;re at 0 lives.
+          Watch a short video for 1 life (once per 24h) or buy a full refill with Stripe. You can
+          also tap the hearts in the header.
         </Text>
       </Box>
     );

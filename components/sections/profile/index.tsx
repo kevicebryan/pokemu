@@ -1,45 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Group, Loader, Stack, Text, Title } from "@mantine/core";
+import { Group, Loader, Stack, Text, Title, Tooltip } from "@mantine/core";
 import { IconHeart, IconHeartFilled } from "@tabler/icons-react";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { fetchProfileByUserId } from "@/redux/slices/profileSlice";
-import {
-  HEART_REFILL_INTERVAL_MS,
-  MAX_HEARTS,
-} from "@/util/constant";
+import { HEARTS_REFRESH_TOOLTIP, MAX_HEARTS } from "@/util/constant";
+import { heartRefillCaption } from "@/util/heartCaption";
 import AsciiAtlas from "./Atlas";
 import { ProfileForm } from "./ProfileForm";
 
 const DEFAULT_DISPLAY = "Ranger";
-
-function heartRefillCaption(
-  heartsLeft: number,
-  lastHeartReset: string | null,
-): string {
-  if (heartsLeft >= MAX_HEARTS) {
-    return "You're at full hearts.";
-  }
-  if (!lastHeartReset) {
-    return "Next refill time will appear after your first heart is used.";
-  }
-  const nextMs = new Date(lastHeartReset).getTime() + HEART_REFILL_INTERVAL_MS;
-  const delta = nextMs - Date.now();
-  if (delta <= 0) {
-    return "Hearts should refill soon — refresh if the count looks stale.";
-  }
-  const hours = Math.ceil(delta / (60 * 60 * 1000));
-  if (hours >= 24) {
-    const days = Math.ceil(delta / (24 * 60 * 60 * 1000));
-    return `Next refill in about ${days} day${days === 1 ? "" : "s"}.`;
-  }
-  if (hours >= 1) {
-    return `Next refill in about ${hours} hour${hours === 1 ? "" : "s"}.`;
-  }
-  const mins = Math.max(1, Math.ceil(delta / (60 * 1000)));
-  return `Next refill in about ${mins} minute${mins === 1 ? "" : "s"}.`;
-}
 
 const ProfileSection = () => {
   const dispatch = useAppDispatch();
@@ -126,26 +97,30 @@ const ProfileSection = () => {
                 <Text size="sm" c="dimmed">
                   {heartsLeft}/{MAX_HEARTS}
                 </Text>
-                <Group gap={4} wrap="nowrap">
-                  {Array.from({ length: MAX_HEARTS }, (_, index) => {
-                    const filled = index < heartsLeft;
-                    return filled ? (
-                      <IconHeartFilled
-                        key={index}
-                        size={22}
-                        color="var(--mantine-color-mistral-6)"
-                        stroke={1.5}
-                      />
-                    ) : (
-                      <IconHeart
-                        key={index}
-                        size={22}
-                        color="var(--mantine-color-dimmed)"
-                        stroke={1.5}
-                      />
-                    );
-                  })}
-                </Group>
+                <Tooltip label={HEARTS_REFRESH_TOOLTIP} withArrow multiline maw={280}>
+                  <span style={{ display: "inline-block", cursor: "default" }}>
+                    <Group gap={4} wrap="nowrap">
+                      {Array.from({ length: MAX_HEARTS }, (_, index) => {
+                        const filled = index < heartsLeft;
+                        return filled ? (
+                          <IconHeartFilled
+                            key={index}
+                            size={22}
+                            color="var(--mantine-color-mistral-6)"
+                            stroke={1.5}
+                          />
+                        ) : (
+                          <IconHeart
+                            key={index}
+                            size={22}
+                            color="var(--mantine-color-dimmed)"
+                            stroke={1.5}
+                          />
+                        );
+                      })}
+                    </Group>
+                  </span>
+                </Tooltip>
               </Group>
               <Text size="xs" c="dimmed">
                 {heartRefillCaption(heartsLeft, profile?.last_heart_reset ?? null)}
