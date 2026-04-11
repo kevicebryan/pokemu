@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ActionIcon,
   Box,
   Button,
   Center,
@@ -17,6 +18,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { notifications } from "@mantine/notifications";
+import { IconDeviceFloppy, IconPlus, IconShare } from "@tabler/icons-react";
 import type { CollectionArtifact } from "@/lib/types/collection";
 import {
   addRoomDecoration,
@@ -367,42 +369,79 @@ export default function RoomBox({
     ? `${roomOwnerName.trim()}'s Room`
     : `${roomOwnerUserId.slice(0, 8)}…'s Room`;
 
+  const copyRoomShareUrl = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const path = `/dashboard/room/${encodeURIComponent(roomOwnerUserId)}`;
+    const url = `${window.location.origin}${path}`;
+    void navigator.clipboard.writeText(url).then(
+      () => {
+        notifications.show({
+          title: "Link copied",
+          message: "Room URL copied to clipboard.",
+          color: "mistral",
+        });
+      },
+      () => {
+        notifications.show({
+          title: "Could not copy",
+          message: "Clipboard permission denied or unavailable.",
+          color: "red",
+        });
+      },
+    );
+  }, [roomOwnerUserId]);
+
   return (
     <Stack gap="sm">
-
-      {hideViewOnlyHint ? null : canEdit ? (
-        <Stack gap={"xs"}>
-          <Group gap="sm" wrap="wrap">
-            <Button onClick={openAdd} size="sm" variant="outline">
-              Add artifact
-            </Button>
-            <Button
-              onClick={() => void handleSaveLayout()}
-              size="sm"
-              variant="filled"
-              color="mistral"
-              disabled={(!layoutDirty && !roomStyleDirty) || savingLayout}
-              loading={savingLayout}
-            >
-              Save layout
-            </Button>
-          </Group>
-          {layoutDirty || roomStyleDirty ? (
-            <Text size="xs" c="dimmed">
-              You have unsaved changes — click Save layout to persist
-              {layoutDirty && roomStyleDirty
-                ? " positions and room style."
-                : layoutDirty
-                  ? " positions."
-                  : " room style."}
-            </Text>
+      <Stack gap="xs">
+        <Group gap="sm" wrap="wrap" align="center">
+          {!hideViewOnlyHint && canEdit ? (
+            <>
+              <Button onClick={openAdd} size="sm" variant="outline" leftSection={<IconPlus size={20} stroke={1.75} />}>
+                Artifact
+              </Button>
+              <Button
+                onClick={() => void handleSaveLayout()}
+                size="sm"
+                variant="filled"
+                color="mistral"
+                disabled={(!layoutDirty && !roomStyleDirty) || savingLayout}
+                loading={savingLayout}
+                leftSection={<IconDeviceFloppy size={20} stroke={1.75} />}
+              >
+                Save
+              </Button>
+            </>
           ) : null}
-        </Stack>
-      ) : (
-        <Text size="sm" c="dimmed">
-          You can only arrange artifacts in your own room.
-        </Text>
-      )}
+          <ActionIcon
+            type="button"
+            variant="outline"
+            color="mistral"
+            radius={0}
+            size="lg"
+            aria-label="Copy link to this room"
+            title="Copy room link"
+            onClick={copyRoomShareUrl}
+          >
+            <IconShare size={20} stroke={1.75} />
+          </ActionIcon>
+        </Group>
+        {!hideViewOnlyHint && canEdit && (layoutDirty || roomStyleDirty) ? (
+          <Text size="xs" c="dimmed">
+            You have unsaved changes — click Save layout to persist
+            {layoutDirty && roomStyleDirty
+              ? " positions and room style."
+              : layoutDirty
+                ? " positions."
+                : " room style."}
+          </Text>
+        ) : null}
+        {!hideViewOnlyHint && !canEdit ? (
+          <Text size="sm" c="dimmed">
+            You can only arrange artifacts in your own room.
+          </Text>
+        ) : null}
+      </Stack>
 
       <Flex
         gap="md"
